@@ -4,7 +4,7 @@
 
 **Lof** es una aplicación web (PWA) diseñada para llevar la **gestión, transparencia y organización** de una casa de vacaciones familiar. Su objetivo es eliminar malentendidos mediante un sistema centralizado de reservas, cálculo automático de costos y reglas claras.
 
-![Vista Previa de la App](./public/screenshot.png)
+![Vista Previa de la App](./public/images/screenshot.png)
 *(Asegúrate de poner una captura aquí o borra esta línea)*
 
 ## 🚀 Funcionalidades Principales
