@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Lof 🏔️🌊
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Lof** (del mapudungún): *Unidad básica de organización social y territorial de la cultura mapuche, basada en lazos familiares.*
 
-Currently, two official plugins are available:
+**Lof** es una aplicación web (PWA) diseñada para llevar la **gestión, transparencia y organización** de una casa de vacaciones familiar. Su objetivo es eliminar malentendidos mediante un sistema centralizado de reservas, cálculo automático de costos y reglas claras.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![Vista Previa de la App](./public/screenshot.png)
+*(Asegúrate de poner una captura aquí o borra esta línea)*
 
-## React Compiler
+## 🚀 Funcionalidades Principales
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **📅 Calendario Inteligente:**
+  - Visualización clara de fechas disponibles y ocupadas.
+  - Bloqueo automático de fechas confirmadas.
+  - Soporte para rangos de fechas (Check-in / Check-out).
 
-## Expanding the ESLint configuration
+- **💰 Calculadora de Costos ("La Vaca"):**
+  - Cálculo automático basado en reglas de negocio configurables.
+  - Diferenciación de tarifas por Adultos vs Niños.
+  - Lógica de exención de pago por edad (ej: menores de 6 años gratis).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **✅ Flujo de Aprobación:**
+  - Las reservas nacen como **Solicitudes (Pendientes)**.
+  - Panel de administración para **Aprobar** o **Rechazar** solicitudes.
+  - Historial de rechazos (las fechas se liberan pero queda el registro).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **📊 Transparencia Financiera:**
+  - Visualización de datos bancarios para transferencias.
+  - Resumen de reglas de cobro (Gastos Fijos vs Variables).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠️ Stack Tecnológico
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
+El proyecto está construido con tecnologías modernas pensando en escalabilidad y futura migración a App Móvil (React Native).
+
+- **Frontend:** [React](https://react.dev/) + [Vite](https://vitejs.dev/) + TypeScript.
+- **Estilos:** [Tailwind CSS](https://tailwindcss.com/) (Diseño Responsive).
+- **Iconos:** [Lucide React](https://lucide.dev/).
+- **Manejo de Fechas:** `date-fns` + `react-day-picker`.
+- **Backend (BaaS):** [Firebase](https://firebase.google.com/) (Firestore Database).
+- **Notificaciones:** `sonner` (Toasts).
+
+## ⚙️ Configuración y Reglas de Negocio
+
+El proyecto está diseñado para ser flexible. Las tarifas y reglas no están "duras" en el código, sino centralizadas en `src/config/rules.ts`:
+
+```typescript
+export const BUSINESS_RULES = {
+  prices: {
+    adultPerDay: 3600, // Tarifa variable
+    childPerDay: 0,
   },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+  limits: {
+    childMaxAge: 6, // Edad límite para gratuidad
+  }
+  // ...
+};
