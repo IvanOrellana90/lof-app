@@ -1,6 +1,7 @@
 // src/services/firebase.ts
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // Configuración leída desde las variables de entorno (.env.local)
 const firebaseConfig = {
@@ -17,5 +18,8 @@ const app = initializeApp(firebaseConfig);
 
 // 2. Exportar la base de datos (Firestore) para usarla en toda la app
 export const db = getFirestore(app);
+
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export default app;

@@ -10,6 +10,17 @@ export const strings = {
     home: "Inicio",
     bookings: "Reservas",
     expenses: "Gastos y Pagos",
+    profile: "Mi Perfil",
+    logout: "Cerrar Sesión",
+    settings: "Configuración"
+  },
+  profile: {
+    title: "Mi Perfil",
+    subtitle: "Gestiona tu información personal",
+    lblName: "Nombre visible",
+    lblEmail: "Correo electrónico",
+    btnSave: "Guardar Cambios",
+    successUpdate: "Perfil actualizado correctamente"
   },
   home: {
     houseStatusTitle: "Estado de la casa",
@@ -62,5 +73,19 @@ export const strings = {
     statusConfirmed: "Confirmada",
     btnApprove: "Aprobar",
     btnReject: "Rechazar",
+  },
+  auth: {
+    loginTitle: "Ingresar al Lof",
+    loginSubtitle: "Inicia sesión con tu cuenta de Google para gestionar reservas y ver gastos.",
+    btnGoogle: "Continuar con Google",
+    loggingIn: "Iniciando sesión...",
+    logout: "Cerrar Sesión",
+    notAuthorized: "No tienes permisos para ver esta página."
+  },
+  notFound: {
+    code: "404",
+    title: "¡Te has perdido!",
+    description: "Parece que te alejaste demasiado del Lof. La página que buscas no existe o la ruta es incorrecta.",
+    btnHome: "Volver a Casa"
   }
 };

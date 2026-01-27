@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { 
   Calendar as CalendarIcon, 
   X, 
@@ -15,10 +15,10 @@ import {
   Ban 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSettings } from '../context/SettingsContext';
 
 // Imports locales
 import { strings } from '../locales/es';
-import { BUSINESS_RULES } from '../config/rules';
 import { 
   createBooking, 
   getBookings, 
@@ -27,7 +27,7 @@ import {
 } from '../services/bookingService';
 
 const Bookings = () => {
-  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   
   // --- ESTADOS ---
   const [range, setRange] = useState<DateRange | undefined>();
@@ -37,6 +37,8 @@ const Bookings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
+
+  const { settings, loading: loadingSettings } = useSettings();
 
   // --- CARGA DE DATOS ---
   const loadData = async () => {
@@ -60,9 +62,13 @@ const Bookings = () => {
       .map(b => ({ from: b.startDate, to: b.endDate }))
   ];
 
+  if (loadingSettings) {
+    return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
+  }
+
   // --- LÓGICA DE PRECIOS Y CONTADORES ---
-  const PRICE_ADULT = BUSINESS_RULES.prices.adultPerDay;
-  const PRICE_CHILD = BUSINESS_RULES.prices.childPerDay;
+  const PRICE_ADULT = settings.prices.adultPerDay;
+  const PRICE_CHILD = settings.prices.childPerDay;
   
   const totalDays = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
   
@@ -88,7 +94,13 @@ const Bookings = () => {
     const toastId = toast.loading(strings.bookings.processing);
 
     // Creamos la reserva (Nace con estado 'pending')
-    const result = await createBooking(range, counts.adults, counts.children, totalCost);
+    const result = await createBooking(
+        range, 
+        counts.adults, 
+        counts.children, 
+        totalCost,
+        { uid: user!.uid, name: user!.displayName || 'Usuario' }
+    );
 
     toast.dismiss(toastId);
 
@@ -220,7 +232,7 @@ const Bookings = () => {
                       </div>
 
                       {/* Botones de Acción (Solo visibles si está Pendiente) */}
-                      {isPending && (
+                      {isPending && isAdmin && (
                         <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-yellow-200 pt-2 sm:pt-0 sm:ml-2">
                           <button 
                             onClick={() => handleStatusChange(booking.id, 'confirmed')}
@@ -312,7 +324,7 @@ const Bookings = () => {
                   </div>
                   <div>
                     <p className="font-medium text-slate-900">
-                      {strings.bookings.childrenLabel} ({'<'} {BUSINESS_RULES.limits.childMaxAge})
+                      {strings.bookings.childrenLabel} ({'<'} {settings.limits.childMaxAge})
                     </p>
                     <p className="text-xs text-green-600 font-medium">
                       {PRICE_CHILD === 0 ? strings.bookings.freeLabel : `$${PRICE_CHILD} / día`}

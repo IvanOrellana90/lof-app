@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { type DateRange } from 'react-day-picker';
 
@@ -15,20 +15,21 @@ export const createBooking = async (
   range: DateRange, 
   adults: number, 
   children: number, 
-  totalCost: number
+  totalCost: number,
+  user: { uid: string, name: string }
 ) => {
   try {
     if (!range.from || !range.to) throw new Error("Fechas incompletas");
 
     const bookingPayload = {
-      userId: "usuario_invitado_1",
-      userName: "Familia Invitada",
+      userId: user.uid,
+      userName: user.name, 
       startDate: Timestamp.fromDate(range.from),
       endDate: Timestamp.fromDate(range.to),
       adults,
       children,
       totalCost,
-      status: 'pending', // <--- CAMBIO CLAVE: Estado inicial
+      status: 'pending',
       createdAt: Timestamp.now()
     };
 
@@ -44,21 +45,43 @@ export const createBooking = async (
 // 2. Obtener Reservas (Igual que antes)
 export const getBookings = async (): Promise<Booking[]> => {
   try {
+    // A. Pedimos las reservas
     const q = query(collection(db, "bookings"), orderBy("startDate", "asc"));
-    const querySnapshot = await getDocs(q);
+    const bookingsSnap = await getDocs(q);
 
-    return querySnapshot.docs.map(doc => {
+    // B. Pedimos TODOS los usuarios para tener sus nombres actualizados
+    // (Para una app familiar esto es muy rápido. Si escala mucho, se optimizaría después)
+    const usersSnap = await getDocs(collection(db, "users"));
+    const usersMap: Record<string, string> = {};
+    
+    usersSnap.forEach(doc => {
+      const userData = doc.data();
+      // Guardamos en un diccionario: { "uid_123": "Papá Ivan", ... }
+      usersMap[doc.id] = userData.displayName || "Usuario";
+    });
+
+    console.log("📡 Reservas y Usuarios sincronizados");
+
+    return bookingsSnap.docs.map(doc => {
       const data = doc.data();
+      const startDate = data.startDate?.toDate ? data.startDate.toDate() : new Date();
+      const endDate = data.endDate?.toDate ? data.endDate.toDate() : new Date();
+
+      // C. MAGIA AQUÍ: Usamos el nombre del mapa de usuarios, 
+      // si no existe (ej: usuario borrado), usamos el que estaba guardado en la reserva como respaldo.
+      const currentDisplayName = usersMap[data.userId] || data.userName || 'Usuario desconocido';
+
       return {
         id: doc.id,
-        userName: data.userName,
-        status: data.status,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: (data.endDate as Timestamp).toDate()
+        userId: data.userId,
+        userName: currentDisplayName, // <--- Aquí inyectamos el nombre vivo
+        status: data.status || 'confirmed',
+        startDate: startDate,
+        endDate: endDate
       } as Booking;
     });
   } catch (error) {
-    console.error("Error al obtener reservas:", error);
+    console.error("🔥 Error al obtener reservas:", error);
     return [];
   }
 };
