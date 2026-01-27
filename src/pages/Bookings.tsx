@@ -340,7 +340,7 @@ const Bookings = () => {
                   </div>
                   <div>
                     <p className="font-medium text-slate-900">
-                      {strings.bookings.childrenLabel} ({'<'} {settings.limits.childMaxAge})
+                      {strings.bookings.childrenLabel} ({'>'} {settings.limits.childMaxAge})
                     </p>
                     <p className="text-xs text-green-600 font-medium">
                       {PRICE_CHILD === 0 ? strings.bookings.freeLabel : `$${PRICE_CHILD} / día`}

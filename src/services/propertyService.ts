@@ -48,22 +48,43 @@ export const createProperty = async (name: string, user: { uid: string, email: s
 
 // 2. Obtener Mis Propiedades (Donde soy admin o estoy en allowedEmails)
 // Nota: Por ahora buscaremos por "admins" para simplificar el dashboard de gestión
-export const getUserProperties = async (userId: string): Promise<Property[]> => {
+export const getUserProperties = async (userId: string, userEmail: string | null): Promise<Property[]> => {
   try {
     const propertiesRef = collection(db, "properties");
-    // Buscamos donde mi UID esté en el array de admins
-    const q = query(propertiesRef, where("admins", "array-contains", userId));
+    const uniqueProperties = new Map<string, Property>();
+
+    // 1. Consulta A: Propiedades donde soy ADMIN (por UID)
+    const qAdmins = query(propertiesRef, where("admins", "array-contains", userId));
+    const snapAdmins = await getDocs(qAdmins);
     
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => {
+    snapAdmins.docs.forEach(doc => {
       const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate()
-      } as Property;
+      uniqueProperties.set(doc.id, { 
+        id: doc.id, 
+        ...data, 
+        createdAt: data.createdAt?.toDate() 
+      } as Property);
     });
+
+    // 2. Consulta B: Propiedades donde soy MIEMBRO (por Email)
+    if (userEmail) {
+      const qMembers = query(propertiesRef, where("allowedEmails", "array-contains", userEmail));
+      const snapMembers = await getDocs(qMembers);
+      
+      snapMembers.docs.forEach(doc => {
+        // El Map evita duplicados automáticamente si soy admin Y miembro a la vez
+        const data = doc.data();
+        uniqueProperties.set(doc.id, { 
+          id: doc.id, 
+          ...data, 
+          createdAt: data.createdAt?.toDate() 
+        } as Property);
+      });
+    }
+
+    // Convertimos el Map a Array
+    return Array.from(uniqueProperties.values());
+
   } catch (error) {
     console.error("Error getting properties:", error);
     return [];
@@ -112,5 +133,18 @@ export const getPropertyById = async (propertyId: string): Promise<Property | nu
   } catch (error) {
     console.error("Error getting property:", error);
     return null;
+  }
+};
+
+export const updateAllowedEmails = async (propertyId: string, emails: string[]) => {
+  try {
+    const docRef = doc(db, "properties", propertyId);
+    await updateDoc(docRef, { 
+      allowedEmails: emails 
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating emails:", error);
+    return { success: false, error };
   }
 };

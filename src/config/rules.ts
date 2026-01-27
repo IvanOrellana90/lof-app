@@ -7,7 +7,7 @@ export const BUSINESS_RULES = {
     currency: 'CLP'
   },
   limits: {
-    childMaxAge: 6,     // Edad límite para ser considerado "niño gratis"
+    childMaxAge: 6,    // Edad límite para ser considerado "niño gratis"
     minDaysToBook: 1
   },
   fixedFees: {

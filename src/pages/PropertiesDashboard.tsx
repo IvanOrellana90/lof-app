@@ -14,7 +14,6 @@ const PropertiesDashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newPropName, setNewPropName] = useState("");
 
-  // Cargar propiedades al entrar
   useEffect(() => {
     if (user?.uid) {
       loadProperties();
@@ -24,22 +23,26 @@ const PropertiesDashboard = () => {
   const loadProperties = async () => {
     if (!user?.uid) return;
     setLoading(true);
-    const data = await getUserProperties(user.uid);
+    
+    // --- CAMBIO AQUÍ: Pasamos user.uid Y user.email ---
+    const data = await getUserProperties(user.uid, user.email);
+    
     setProperties(data);
     setLoading(false);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPropName.trim() || !user?.email) return;
+    if (!newPropName.trim() || !user?.email) return; // user.email es vital ahora
 
     setIsCreating(true);
+    // Al crear, pasamos los datos para que el servicio nos ponga como admin y miembro
     const result = await createProperty(newPropName, { uid: user.uid, email: user.email });
     
     if (result.success) {
       toast.success("¡Propiedad creada!");
       setNewPropName("");
-      loadProperties(); // Recargar lista
+      loadProperties(); 
     } else {
       toast.error("Error al crear propiedad");
     }
@@ -47,28 +50,24 @@ const PropertiesDashboard = () => {
   };
 
   const handleSelectProperty = (id: string) => {
-    // Aquí redirigimos al dashboard interno de esa propiedad
-    // IMPORTANTE: Guardaremos el ID en la URL
-    navigate(`/property/${id}`);
+    navigate(`/property/${id}`); // O la ruta que prefieras como inicio
   };
 
-  if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin"/></div>;
+  if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-lof-600"/></div>;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Mis Propiedades</h1>
-            <p className="text-slate-600">Bienvenido, {user?.displayName}</p>
-          </div>
-          {/* Aquí podrías poner el botón de logout o perfil si no hay Navbar global */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Mis Propiedades</h1>
+          <p className="text-slate-600">Bienvenido, {user?.displayName}</p>
         </div>
 
         {/* Lista de Propiedades */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          
           {/* Card: Crear Nueva */}
           <div className="bg-white border-2 border-dashed border-slate-300 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-lof-500 transition-colors group">
             <div className="bg-slate-100 p-4 rounded-full mb-4 group-hover:bg-lof-50 transition-colors">
@@ -93,26 +92,37 @@ const PropertiesDashboard = () => {
           </div>
 
           {/* Cards: Propiedades Existentes */}
-          {properties.map(prop => (
-            <div key={prop.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
-              <div>
-                <div className="w-12 h-12 bg-lof-100 rounded-xl flex items-center justify-center mb-4 text-lof-700">
-                  <Home size={24} />
+          {properties.map(prop => {
+            // Podemos saber visualmente si soy admin o solo miembro
+            const isAdmin = prop.admins.includes(user?.uid || '');
+            
+            return (
+              <div key={prop.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                
+                {/* Badge opcional de Rol */}
+                <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-bl-xl ${isAdmin ? 'bg-lof-100 text-lof-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {isAdmin ? 'Admin' : 'Miembro'}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">{prop.name}</h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  {prop.admins.length} Administrador{prop.admins.length > 1 ? 'es' : ''}
-                </p>
+
+                <div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${isAdmin ? 'bg-lof-100 text-lof-700' : 'bg-purple-100 text-purple-600'}`}>
+                    <Home size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 truncate">{prop.name}</h3>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {prop.allowedEmails?.length || 0} Miembros habilitados
+                  </p>
+                </div>
+                
+                <button 
+                  onClick={() => handleSelectProperty(prop.id)}
+                  className="mt-6 w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-colors"
+                >
+                  Entrar <ArrowRight size={18} />
+                </button>
               </div>
-              
-              <button 
-                onClick={() => handleSelectProperty(prop.id)}
-                className="mt-6 w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-colors"
-              >
-                Entrar <ArrowRight size={18} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
