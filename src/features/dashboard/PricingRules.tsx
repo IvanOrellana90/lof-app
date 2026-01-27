@@ -1,66 +1,35 @@
-import { Users, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 import { strings } from '../../locales/es';
-import { BUSINESS_RULES } from '../../config/rules';
 
 const PricingRules = () => {
+  const { settings } = useSettings();
+
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-        <Info size={20} className="text-lof-600" />
-        {strings.pricing.title}
-      </h3>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div className="flex items-center gap-2 mb-4">
+        <Info className="text-lof-600" size={20} />
+        <h3 className="font-bold text-slate-800">{strings.home.pricingTitle}</h3>
+      </div>
 
-      <div className="space-y-6">
-        
-        {/* Fixed Costs */}
-        <div>
-          <h4 className="text-sm font-semibold text-slate-500 uppercase mb-3">
-            {strings.pricing.sectionFixed}
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <span className="block text-xs text-slate-500">{strings.pricing.gen1}</span>
-              <span className="block text-lg font-bold text-slate-800">$160.133</span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <span className="block text-xs text-slate-500">{strings.pricing.gen2}</span>
-              <span className="block text-lg font-bold text-slate-800">$17.157</span>
-            </div>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">{strings.pricing.noteFixed}</p>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center py-2 border-b border-slate-50">
+          <span className="text-slate-600">Adultos</span>
+          <span className="font-bold text-slate-900">
+            ${settings.prices.adultPerDay.toLocaleString('es-CL')} <span className="text-xs text-slate-400 font-normal">/día</span>
+          </span>
         </div>
-
-        {/* Variable Costs */}
-        <div>
-          <h4 className="text-sm font-semibold text-slate-500 uppercase mb-3">
-            {strings.pricing.sectionVariable}
-          </h4>
-          <div className="flex items-center justify-between p-4 bg-lof-50 rounded-lg border border-lof-100">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-full text-lof-600">
-                <Users size={20} />
-              </div>
-              <div>
-                <p className="font-bold text-lof-900">{strings.pricing.adults}</p>
-                <p className="text-xs text-lof-700">{strings.pricing.perDay}</p>
-              </div>
-            </div>
-            {/* PRECIO DINÁMICO */}
-            <span className="text-2xl font-bold text-lof-700">
-              ${BUSINESS_RULES.prices.adultPerDay.toLocaleString()}
-            </span>
-          </div>
-          
-          {/* REGLA DE NIÑOS DINÁMICA */}
-          <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-            <span>👶</span> 
-            {BUSINESS_RULES.prices.childPerDay === 0 
-              ? `Niños menores de ${BUSINESS_RULES.limits.childMaxAge} años no pagan.`
-              : `Niños pagan $${BUSINESS_RULES.prices.childPerDay} desde los ${BUSINESS_RULES.limits.childMaxAge} años.`
-            }
+        <div className="flex justify-between items-center py-2 border-b border-slate-50">
+          <span className="text-slate-600">Niños</span>
+          <span className="font-bold text-slate-900">
+            ${settings.prices.childPerDay.toLocaleString('es-CL')} <span className="text-xs text-slate-400 font-normal">/día</span>
+          </span>
+        </div>
+        <div className="bg-orange-50 p-3 rounded-lg mt-2">
+          <p className="text-xs text-orange-700">
+            * Niños menores de {settings.limits.childMaxAge} años no pagan.
           </p>
         </div>
-
       </div>
     </div>
   );

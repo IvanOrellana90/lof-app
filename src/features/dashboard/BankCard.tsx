@@ -1,17 +1,21 @@
+// src/features/dashboard/BankCard.tsx
+
 import { Copy, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { strings } from '../../locales/es';
+import { useSettings } from '../../context/SettingsContext';
 
 const BankCard = () => {
   const [copied, setCopied] = useState(false);
+  const { settings } = useSettings();
   
-  // Data stays in code (or config file), Labels come from strings
-  const bankDetails = {
-    accountName: "JOSEFA ORELLANA VAL",
-    rut: "18.392.837-6",
-    bankName: "Bci / Cuenta Vista",
-    accountNumber: "777018392837",
-    email: "orellanav.josefa@gmail.com"
+  const bankDetails = settings.bankDetails || {
+     accountName: "...",
+     rut: "...",
+     bankName: "...",
+     accountType: "...", // Default
+     accountNumber: "...",
+     email: "..."
   };
 
   const handleCopy = () => {
@@ -22,7 +26,7 @@ const BankCard = () => {
 
   return (
     <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-      {/* Background decoration */}
+      {/* Background decorations */}
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-lof-500/20 rounded-full blur-xl"></div>
 
@@ -32,18 +36,23 @@ const BankCard = () => {
             <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">
               {strings.bankCard.title}
             </p>
-            <h3 className="text-xl font-bold mt-1">{bankDetails.accountName}</h3>
+            <h3 className="text-xl font-bold mt-1 uppercase">{bankDetails.accountName}</h3>
             <p className="text-slate-300 text-sm">{bankDetails.rut}</p>
           </div>
           <CreditCard className="text-lof-500" size={32} />
         </div>
 
         <div className="space-y-4">
+          
+          {/* AQUÍ ESTÁ EL CAMBIO VISUAL */}
           <div>
             <p className="text-slate-400 text-xs uppercase">
               {strings.bankCard.bankLabel}
             </p>
-            <p className="font-medium">{bankDetails.bankName}</p>
+            <p className="font-medium">
+               {/* Combinamos Banco y Tipo si existen */}
+               {bankDetails.bankName} {bankDetails.accountType ? `• ${bankDetails.accountType}` : ''}
+            </p>
           </div>
 
           <div>

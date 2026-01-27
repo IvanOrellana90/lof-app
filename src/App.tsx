@@ -11,6 +11,8 @@ import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 import { SettingsProvider } from './context/SettingsContext';
 import Settings from './pages/Settings';
+import PropertiesDashboard from './pages/PropertiesDashboard';
+import PropertyGuard from './components/auth/PropertyGuard';
 
 
 // Placeholders temporales para las otras páginas
@@ -29,38 +31,63 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <AuthProvider>
-      <SettingsProvider>
-        <BrowserRouter>
-          <div className="min-h-screen bg-slate-50">
-            <Routes>
-              <Route path="/login" element={<Login />} />
+      {/* SettingsProvider se mueve abajo, dentro de la propiedad */}
+      <BrowserRouter>
+        <div className="min-h-screen bg-slate-50">
+          <Routes>
+            {/* 1. Login (Público) */}
+            <Route path="/login" element={<Login />} />
 
-              <Route path="/*" element={
-                <PrivateRoute>
-                  <>
-                    <Navbar />
-                    <main className="max-w-5xl mx-auto">
-                      <Routes>
-                        {/* Rutas válidas */}
-                        <Route path="/" element={<Home />} />
-                        <Route path="/bookings" element={<Bookings />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/expenses" element={<Gastos />} />
-                        <Route path="/admin/settings" element={<Settings />} />
-                        
-                        {/* --- AQUÍ ESTÁ EL CAMBIO --- */}
-                        {/* Si escriben cualquier otra cosa, mostramos el 404 */}
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </main>
-                  </>
-                </PrivateRoute>
-              } />
-            </Routes>
-            <Toaster position="top-center" richColors />
-          </div>
-        </BrowserRouter>
-      </SettingsProvider>
+            {/* 2. Rutas Globales (Protegidas) */}
+            <Route path="/" element={
+              <PrivateRoute>
+                <>
+                  <Navbar />
+                  <PropertiesDashboard />
+                </>
+              </PrivateRoute>
+            } />
+
+            <Route path="/profile" element={
+              <PrivateRoute>
+                <>
+                  <Navbar /> 
+                  <Profile />
+                </>
+              </PrivateRoute>
+            } />
+
+            {/* 3. Rutas de Propiedad Específica (Protegidas + Contexto de Configuración) */}
+            <Route path="/property/:propertyId/*" element={
+              <PrivateRoute>
+                <PropertyGuard>
+                  <SettingsProvider>
+                    <>
+                      <Navbar />
+                      <main className="max-w-5xl mx-auto">
+                        <Routes>
+                          <Route path="/" element={<Home />} />
+                          <Route path="bookings" element={<Bookings />} />
+                          <Route path="expenses" element={<Gastos />} />
+                          <Route path="settings" element={<Settings />} />
+                          {/* Si ponen una ruta loca DENTRO de la propiedad, van al Home de la propiedad */}
+                          <Route path="*" element={<Navigate to="" replace />} />
+                        </Routes>
+                      </main>
+                    </>
+                  </SettingsProvider>
+                </PropertyGuard>
+              </PrivateRoute>
+            } />
+
+            {/* 4. Página 404 Global */}
+            {/* Si ninguna de las anteriores coincide, mostramos NotFound */}
+            <Route path="*" element={<NotFound />} />
+
+          </Routes>
+          <Toaster position="top-center" richColors />
+        </div>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

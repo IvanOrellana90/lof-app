@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import { format, differenceInDays } from 'date-fns';
+import { useParams } from 'react-router-dom';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -25,9 +26,11 @@ import {
   updateBookingStatus, 
   type Booking 
 } from '../services/bookingService';
+import { checkPropertyAdmin } from '../services/propertyService';
 
 const Bookings = () => {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
+  const { propertyId } = useParams();
   
   // --- ESTADOS ---
   const [range, setRange] = useState<DateRange | undefined>();
@@ -37,20 +40,33 @@ const Bookings = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
+  const [isPropertyAdmin, setIsPropertyAdmin] = useState(false);
 
   const { settings, loading: loadingSettings } = useSettings();
 
-  // --- CARGA DE DATOS ---
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      if (user && propertyId) {
+        const isAdmin = await checkPropertyAdmin(propertyId, user.uid);
+        setIsPropertyAdmin(isAdmin);
+      }
+    };
+    verifyAdmin();
+  }, [user, propertyId]);
+
   const loadData = async () => {
+    if (!propertyId) return; 
+
     setLoadingList(true);
-    const data = await getBookings();
+    // Pasamos el ID al servicio
+    const data = await getBookings(propertyId); 
     setExistingBookings(data);
     setLoadingList(false);
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+  loadData();
+  }, [propertyId]);
 
   // --- LÓGICA DEL CALENDARIO (BLOQUEOS) ---
   // Bloqueamos días pasados Y cualquier reserva (ya sea pendiente o confirmada)
@@ -88,13 +104,13 @@ const Bookings = () => {
 
   // --- ACCIÓN 1: SOLICITAR RESERVA ---
   const handleReservation = async () => {
-    if (!range?.from || !range?.to) return;
+    if (!range?.from || !range?.to || !propertyId) return; // Validar ID
 
     setIsSubmitting(true);
     const toastId = toast.loading(strings.bookings.processing);
 
-    // Creamos la reserva (Nace con estado 'pending')
     const result = await createBooking(
+        propertyId,
         range, 
         counts.adults, 
         counts.children, 
@@ -232,7 +248,7 @@ const Bookings = () => {
                       </div>
 
                       {/* Botones de Acción (Solo visibles si está Pendiente) */}
-                      {isPending && isAdmin && (
+                      {isPending && isPropertyAdmin && (
                         <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-yellow-200 pt-2 sm:pt-0 sm:ml-2">
                           <button 
                             onClick={() => handleStatusChange(booking.id, 'confirmed')}

@@ -1,12 +1,14 @@
 export const strings = {
   common: {
     welcomeTitle: "¡Mari mari kom pu che! 👋",
-    welcomeSubtitle: "Bienvenido al Lof. Gestionemos nuestra casa juntos.",
+    welcomeSubtitle: (propertyName: string) =>
+    `Bienvenido a ${propertyName}. Gestionemos nuestra casa juntos.`,
     loading: "Cargando...",
     currency: "$",
-    emailLabel: "Email",
+    emailLabel: "Correo",
   },
   nav: {
+    dashboard: "Panel",
     home: "Inicio",
     bookings: "Reservas",
     expenses: "Gastos y Pagos",
@@ -23,20 +25,20 @@ export const strings = {
     successUpdate: "Perfil actualizado correctamente"
   },
   home: {
-    houseStatusTitle: "Estado de la casa",
-    statusAvailable: "Disponible hoy",
-    statusOccupied: "Ocupado",
-    nobodyHome: "No hay nadie en la casa en este momento.",
-    btnNewBooking: "Agendar Nueva Visita",
+    houseStatusTitle: "Estado de la Casa",
+    statusAvailable: "Disponible",
+    nobodyHome: "No hay nadie ocupando la casa en este momento.",
+    btnNewBooking: "Nueva Reserva",
     btnHistory: "Historial de Gastos",
-    historySubtitle: "Revisar balance y pagos anteriores",
+    historySubtitle: "Revisa los pagos anteriores",
+    pricingTitle: "Tarifas Vigentes"
   },
   bankCard: {
-    title: "Cuenta Común",
+    title: "Datos de Transferencia",
     bankLabel: "Banco",
+    accountTypeLabel: "Tipo de Cuenta",
     accountLabel: "Número de Cuenta",
-    copiedMsg: "¡Copiado!",
-    ctaCopy: "Copiar",
+    copiedMsg: "¡Copiado!"
   },
   pricing: {
     title: "Reglas de Cobro (Vigentes)",
