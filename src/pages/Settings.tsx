@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { saveSettings, type AppSettings } from '../services/settingsService';
 import { toast } from 'sonner';
-import { Save, DollarSign, Baby, Calendar } from 'lucide-react';
+import { Save, DollarSign, Baby } from 'lucide-react';
 import { strings } from '../locales/es';
 
 const Settings = () => {

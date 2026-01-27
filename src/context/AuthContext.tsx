@@ -2,8 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { 
   signInWithPopup, // <--- VOLVEMOS A POPUP
   signOut, 
-  onAuthStateChanged, 
-  type User as FirebaseUser 
+  onAuthStateChanged,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../services/firebase';

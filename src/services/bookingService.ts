@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { type DateRange } from 'react-day-picker';
 
