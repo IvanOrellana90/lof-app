@@ -77,7 +77,7 @@ export const strings = {
     btnReject: "Rechazar",
   },
   auth: {
-    loginTitle: "Ingresar al Lof",
+    loginTitle: "Ingresar al Lof App",
     loginSubtitle: "Inicia sesión con tu cuenta de Google para gestionar reservas y ver gastos.",
     btnGoogle: "Continuar con Google",
     loggingIn: "Iniciando sesión...",

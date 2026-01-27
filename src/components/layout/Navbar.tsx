@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Home, Calendar, Wallet, Menu, X, LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
 import { strings } from '../../locales/es';
 import { useAuth } from '../../context/AuthContext';
+import logo from '../../../public/images/logo.png';
 
 const Navbar = () => {
   const location = useLocation();
@@ -39,7 +40,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img
-              src="../public/images/logo.png" // Asegúrate de que la ruta a tu imagen sea correcta
+              src={logo} // Asegúrate de que la ruta a tu imagen sea correcta
               alt="Lof App"
               className="h-12 w-auto" // Ajusta la altura (h-12) según lo necesites
             />

@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { strings } from '../locales/es';
 import { Loader2 } from 'lucide-react';
+import logo from '../../public/images/logo.png';
 
 const Login = () => {
   const { user, login, loading } = useAuth();
@@ -14,13 +15,14 @@ const Login = () => {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
         
         {/* Logo Grande */}
-        <div className="w-16 h-16 bg-lof-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-lof-500/30">
-          <span className="text-white font-bold text-3xl">L</span>
+        <div className="bg-white mx-auto flex items-center justify-center p-2">
+          <img
+            src={logo}
+            alt="Logo Lof"
+            className="w-full h-full object-contain"
+          />
         </div>
-
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          {strings.auth.loginTitle}
-        </h1>
+        
         <p className="text-slate-500 mb-8">
           {strings.auth.loginSubtitle}
         </p>
