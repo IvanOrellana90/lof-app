@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowRight, CalendarPlus, Calendar, Wallet, Settings } from 'lucide-react';
+import { ArrowRight, Calendar, Wallet, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { strings } from '../locales/es';
+import { useLanguage } from '../context/LanguageContext';
 import { getPropertyById, checkPropertyAdmin } from '../services/propertyService';
 
 // Importamos los componentes nuevos
 import BankCard from '../features/dashboard/BankCard';
 import PricingRules from '../features/dashboard/PricingRules';
+import HouseStatus from '../features/dashboard/HouseStatus';
 
 const Home = () => {
   const { propertyId } = useParams();
   const { user } = useAuth();
+  const { strings } = useLanguage();
   const [propertyName, setPropertyName] = useState("");
   const [isPropertyAdmin, setIsPropertyAdmin] = useState(false);
 
@@ -38,7 +40,7 @@ const Home = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">
-            {strings.common.welcomeTitle}
+          {strings.common.welcomeTitle}
         </h1>
         <p className="text-slate-600 mt-1">
           {strings.common.welcomeSubtitle(propertyName || "el Lof")}
@@ -47,7 +49,7 @@ const Home = () => {
 
       {/* Grid de Accesos Directos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        
+
         {/* Card: Reservas */}
         <Link to="bookings" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-lof-300 transition-all group">
           <div className="w-12 h-12 bg-lof-100 rounded-xl flex items-center justify-center mb-4 text-lof-600 group-hover:scale-110 transition-transform">
@@ -80,24 +82,11 @@ const Home = () => {
 
       {/* Grid de Información (2 Columnas) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        
+
         {/* Columna Izquierda */}
         <div className="space-y-6">
           {/* Status Card */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-800">{strings.home.houseStatusTitle}</h3>
-              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
-                {strings.home.statusAvailable}
-              </span>
-            </div>
-            <p className="text-slate-500 text-sm mb-6">{strings.home.nobodyHome}</p>
-            
-            <Link to="bookings" className="w-full flex items-center justify-center gap-2 bg-lof-600 hover:bg-lof-700 text-white py-3 px-4 rounded-xl font-medium transition-all shadow-lg shadow-lof-500/20">
-              <CalendarPlus size={20} />
-              {strings.home.btnNewBooking}
-            </Link>
-          </div>
+          <HouseStatus />
 
           <BankCard />
         </div>
@@ -105,7 +94,7 @@ const Home = () => {
         {/* Columna Derecha */}
         <div className="space-y-6">
           <PricingRules />
-          
+
           <Link to="expenses" className="block p-4 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors group">
             <div className="flex justify-between items-center">
               <div>

@@ -2,20 +2,21 @@
 
 import { Copy, CreditCard } from 'lucide-react';
 import { useState } from 'react';
-import { strings } from '../../locales/es';
+import { useLanguage } from '../../context/LanguageContext';
 import { useSettings } from '../../context/SettingsContext';
 
 const BankCard = () => {
   const [copied, setCopied] = useState(false);
   const { settings } = useSettings();
-  
+  const { strings } = useLanguage();
+
   const bankDetails = settings.bankDetails || {
-     accountName: "...",
-     rut: "...",
-     bankName: "...",
-     accountType: "...", // Default
-     accountNumber: "...",
-     email: "..."
+    accountName: "...",
+    rut: "...",
+    bankName: "...",
+    accountType: "...", // Default
+    accountNumber: "...",
+    email: "..."
   };
 
   const handleCopy = () => {
@@ -43,15 +44,15 @@ const BankCard = () => {
         </div>
 
         <div className="space-y-4">
-          
+
           {/* AQUÍ ESTÁ EL CAMBIO VISUAL */}
           <div>
             <p className="text-slate-400 text-xs uppercase">
               {strings.bankCard.bankLabel}
             </p>
             <p className="font-medium">
-               {/* Combinamos Banco y Tipo si existen */}
-               {bankDetails.bankName} {bankDetails.accountType ? `• ${bankDetails.accountType}` : ''}
+              {/* Combinamos Banco y Tipo si existen */}
+              {bankDetails.bankName} {bankDetails.accountType ? `• ${bankDetails.accountType}` : ''}
             </p>
           </div>
 
@@ -59,7 +60,7 @@ const BankCard = () => {
             <p className="text-slate-400 text-xs uppercase mb-1">
               {strings.bankCard.accountLabel}
             </p>
-            <button 
+            <button
               onClick={handleCopy}
               className="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors rounded-lg px-3 py-2 w-full sm:w-auto group"
             >

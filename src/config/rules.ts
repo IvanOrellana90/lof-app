@@ -10,6 +10,7 @@ export const BUSINESS_RULES = {
     childMaxAge: 6,    // Edad límite para ser considerado "niño gratis"
     minDaysToBook: 1
   },
+  fixedCosts: [],  // Array vacío por defecto, se configura por propiedad
   fixedFees: {
     gen1: 160133,
     gen2: 17157

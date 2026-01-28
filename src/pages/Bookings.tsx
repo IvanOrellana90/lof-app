@@ -4,38 +4,39 @@ import { format, differenceInDays } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Calendar as CalendarIcon, 
-  X, 
-  Users, 
-  Baby, 
-  Minus, 
-  Plus, 
-  Loader2, 
-  Check, 
-  Ban 
+import {
+  Calendar as CalendarIcon,
+  X,
+  Users,
+  Baby,
+  Minus,
+  Plus,
+  Loader2,
+  Check,
+  Ban
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '../context/SettingsContext';
+import { useLanguage } from '../context/LanguageContext';
 
-// Imports locales
-import { strings } from '../locales/es';
-import { 
-  createBooking, 
-  getBookings, 
-  updateBookingStatus, 
-  type Booking 
+// Imports locales (removed static import)
+import {
+  createBooking,
+  getBookings,
+  updateBookingStatus,
+  type Booking
 } from '../services/bookingService';
 import { checkPropertyAdmin } from '../services/propertyService';
 
 const Bookings = () => {
   const { user } = useAuth();
   const { propertyId } = useParams();
-  
+  const { strings } = useLanguage();
+
   // --- ESTADOS ---
   const [range, setRange] = useState<DateRange | undefined>();
   const [counts, setCounts] = useState({ adults: 1, children: 0 });
-  
+
   // Estados de carga y datos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
@@ -55,17 +56,17 @@ const Bookings = () => {
   }, [user, propertyId]);
 
   const loadData = async () => {
-    if (!propertyId) return; 
+    if (!propertyId) return;
 
     setLoadingList(true);
     // Pasamos el ID al servicio
-    const data = await getBookings(propertyId); 
+    const data = await getBookings(propertyId);
     setExistingBookings(data);
     setLoadingList(false);
   };
 
   useEffect(() => {
-  loadData();
+    loadData();
   }, [propertyId]);
 
   // --- LÓGICA DEL CALENDARIO (BLOQUEOS) ---
@@ -74,7 +75,7 @@ const Bookings = () => {
     { before: new Date() },
     // CAMBIO IMPORTANTE: Filtramos para que las rechazadas NO bloqueen el calendario
     ...existingBookings
-      .filter(b => b.status !== 'rejected') 
+      .filter(b => b.status !== 'rejected')
       .map(b => ({ from: b.startDate, to: b.endDate }))
   ];
 
@@ -85,19 +86,25 @@ const Bookings = () => {
   // --- LÓGICA DE PRECIOS Y CONTADORES ---
   const PRICE_ADULT = settings.prices.adultPerDay;
   const PRICE_CHILD = settings.prices.childPerDay;
-  
+
   const totalDays = range?.from && range?.to ? differenceInDays(range.to, range.from) : 0;
-  
-  const totalCost = totalDays * (
-    (counts.adults * PRICE_ADULT) + 
+
+  // Costo variable (días × personas)
+  const variableCost = totalDays * (
+    (counts.adults * PRICE_ADULT) +
     (counts.children * PRICE_CHILD)
   );
+
+  // Costos fijos (suma de todos los items del array) - con validación
+  const fixedCost = (settings.fixedCosts || []).reduce((sum, cost) => sum + cost.value, 0);
+
+  const totalCost = variableCost + fixedCost;
 
   const updateCount = (type: 'adults' | 'children', delta: number) => {
     setCounts(prev => {
       const newValue = prev[type] + delta;
-      if (newValue < 0) return prev; 
-      if (type === 'adults' && newValue < 1) return prev; 
+      if (newValue < 0) return prev;
+      if (type === 'adults' && newValue < 1) return prev;
       return { ...prev, [type]: newValue };
     });
   };
@@ -110,12 +117,12 @@ const Bookings = () => {
     const toastId = toast.loading(strings.bookings.processing);
 
     const result = await createBooking(
-        propertyId,
-        range, 
-        counts.adults, 
-        counts.children, 
-        totalCost,
-        { uid: user!.uid, name: user!.displayName || 'Usuario' }
+      propertyId,
+      range,
+      counts.adults,
+      counts.children,
+      totalCost,
+      { uid: user!.uid, name: user!.displayName || 'Usuario' }
     );
 
     toast.dismiss(toastId);
@@ -125,36 +132,36 @@ const Bookings = () => {
         description: strings.bookings.successMsg,
         duration: 5000,
       });
-      
+
       // Limpiamos formulario y recargamos la lista para ver la solicitud
       setRange(undefined);
       setCounts({ adults: 1, children: 0 });
-      loadData(); 
+      loadData();
     } else {
       toast.error("Error", {
         description: strings.bookings.errorMsg
       });
     }
-    setIsSubmitting(false); 
+    setIsSubmitting(false);
   };
 
   // --- ACCIÓN 2: ADMINISTRAR (APROBAR/RECHAZAR) ---
   const handleStatusChange = async (id: string, newStatus: 'confirmed' | 'rejected') => {
-    const toastId = toast.loading("Procesando...", { id: "status-update" });
-    
+    const toastId = toast.loading(strings.bookings.processing, { id: "status-update" });
+
     const res = await updateBookingStatus(id, newStatus);
-    
+
     toast.dismiss(toastId);
-    
+
     if (res.success) {
       if (newStatus === 'confirmed') {
-        toast.success("¡Reserva Aprobada!", { description: "Ahora aparece como confirmada." });
+        toast.success(strings.bookings.toastApproved, { description: strings.bookings.toastApprovedDesc });
       } else {
-        toast.info("Solicitud rechazada", { description: "La fecha ha quedado liberada." });
+        toast.info(strings.bookings.toastRejected, { description: strings.bookings.toastRejectedDesc });
       }
       loadData(); // Recargar para ver cambios
     } else {
-      toast.error("Error al actualizar estado");
+      toast.error(strings.bookings.toastError);
     }
   };
 
@@ -167,10 +174,10 @@ const Bookings = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* === COLUMNA IZQUIERDA: CALENDARIO Y LISTA === */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* 1. Componente Calendario */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-center h-fit">
             <style>{`.rdp-root { --rdp-accent-color: #0ea5e9; }`}</style>
@@ -189,43 +196,43 @@ const Bookings = () => {
           {/* 2. Lista de Reservas / Solicitudes */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-800">Estado del Calendario</h3>
+              <h3 className="font-bold text-slate-800">{strings.bookings.calendarStatus}</h3>
               {loadingList && <Loader2 className="animate-spin text-slate-400" size={16} />}
             </div>
-            
+
             {existingBookings.length === 0 ? (
-              <p className="text-slate-500 text-sm">No hay reservas registradas.</p>
+              <p className="text-slate-500 text-sm">{strings.bookings.noBookings}</p>
             ) : (
               <div className="space-y-3">
                 {existingBookings.map((booking) => {
                   const isPending = booking.status === 'pending';
                   const isRejected = booking.status === 'rejected'; // Nuevo estado
-                  
+
                   // Definimos estilos dinámicos según el estado
                   let cardStyles = 'bg-slate-50 border-slate-100'; // Default (Confirmada)
                   let badgeStyles = 'bg-green-100 text-green-700';
-                  let statusText = 'Confirmada';
+                  let statusText = strings.bookings.statusConfirmed;
                   let avatarStyles = 'bg-lof-100 text-lof-700';
 
                   if (isPending) {
                     cardStyles = 'bg-yellow-50 border-yellow-200';
                     badgeStyles = 'bg-yellow-200 text-yellow-800';
-                    statusText = 'Pendiente';
+                    statusText = strings.bookings.statusPending;
                     avatarStyles = 'bg-yellow-200 text-yellow-800';
                   } else if (isRejected) {
                     // Estilo para rechazadas (Grisáceo/Rojo suave y opaco)
-                    cardStyles = 'bg-red-50/50 border-red-100 opacity-75 grayscale-[0.5]'; 
+                    cardStyles = 'bg-red-50/50 border-red-100 opacity-75 grayscale-[0.5]';
                     badgeStyles = 'bg-red-100 text-red-600 line-through';
-                    statusText = 'Rechazada';
+                    statusText = strings.bookings.statusRejected;
                     avatarStyles = 'bg-slate-200 text-slate-500';
                   }
 
                   return (
-                    <div 
-                      key={booking.id} 
+                    <div
+                      key={booking.id}
                       className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors ${cardStyles}`}
                     >
-                      
+
                       {/* Información de la Reserva */}
                       <div className="flex items-center gap-3 mb-3 sm:mb-0">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${avatarStyles}`}>
@@ -234,7 +241,7 @@ const Bookings = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className={`font-medium text-sm ${isRejected ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
-                                {booking.userName}
+                              {booking.userName}
                             </p>
                             {/* Etiqueta de Estado */}
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${badgeStyles}`}>
@@ -250,14 +257,14 @@ const Bookings = () => {
                       {/* Botones de Acción (Solo visibles si está Pendiente) */}
                       {isPending && isPropertyAdmin && (
                         <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-yellow-200 pt-2 sm:pt-0 sm:ml-2">
-                          <button 
+                          <button
                             onClick={() => handleStatusChange(booking.id, 'confirmed')}
                             className="p-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
                             title={strings.bookings.btnApprove}
                           >
                             <Check size={18} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleStatusChange(booking.id, 'rejected')}
                             className="p-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                             title={strings.bookings.btnReject}
@@ -266,11 +273,11 @@ const Bookings = () => {
                           </button>
                         </div>
                       )}
-                      
+
                       {/* Si está rechazada, mostramos un ícono informativo opcional */}
                       {isRejected && (
                         <div className="hidden sm:block text-red-300 pr-2">
-                            <Ban size={20} />
+                          <Ban size={20} />
                         </div>
                       )}
                     </div>
@@ -289,7 +296,7 @@ const Bookings = () => {
           </h3>
 
           <div className="space-y-6">
-            
+
             {/* Fechas Seleccionadas */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
@@ -364,19 +371,31 @@ const Bookings = () => {
             {/* Total Precio */}
             {totalDays > 0 ? (
               <div className="bg-lof-50 p-4 rounded-xl border border-lof-100">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-600 text-sm">Días totales</span>
-                  <span className="font-bold text-slate-800">{totalDays}</span>
+                {/* Desglose de costos */}
+                <div className="space-y-2 mb-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-600">{strings.bookings.variableCost} ({totalDays} {strings.bookings.totalDays})</span>
+                    <span className="font-medium text-slate-800">${variableCost.toLocaleString('es-CL')}</span>
+                  </div>
+
+                  {/* Mostrar cada costo fijo individualmente */}
+                  {(settings.fixedCosts || []).map((cost) => (
+                    <div key={cost.id} className="flex justify-between items-center text-sm">
+                      <span className="text-slate-600">{cost.name}</span>
+                      <span className="font-medium text-slate-800">${cost.value.toLocaleString('es-CL')}</span>
+                    </div>
+                  ))}
                 </div>
+
+                <hr className="border-lof-200 mb-3" />
+
+                {/* Total */}
                 <div className="flex justify-between items-center text-lg">
                   <span className="text-lof-900 font-bold">{strings.bookings.estTotal}</span>
                   <span className="font-bold text-lof-600 text-2xl">
                     ${totalCost.toLocaleString('es-CL')}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-2 text-center">
-                  * Costo variable. No incluye cuota mensual.
-                </p>
               </div>
             ) : (
               <p className="text-sm text-slate-400 text-center italic">
@@ -386,7 +405,7 @@ const Bookings = () => {
 
             {/* Botón Principal */}
             <div className="space-y-3 pt-2">
-              <button 
+              <button
                 onClick={handleReservation}
                 disabled={!range?.to || isSubmitting}
                 className="w-full flex items-center justify-center gap-2 bg-lof-600 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-lof-700 text-white py-3.5 px-4 rounded-xl font-bold transition-all shadow-lg shadow-lof-500/20 disabled:shadow-none"
@@ -400,9 +419,9 @@ const Bookings = () => {
                   strings.bookings.btnReserve
                 )}
               </button>
-              
+
               {range?.to && !isSubmitting && (
-                <button 
+                <button
                   onClick={() => setRange(undefined)}
                   className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-red-500 text-xs py-2 transition-colors"
                 >

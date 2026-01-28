@@ -2,12 +2,20 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { BUSINESS_RULES } from '../config/rules';
 
+// Interface para costos fijos por arriendo
+export interface FixedCost {
+  id: string;
+  name: string;
+  value: number;
+}
+
 // Reutilizamos las interfaces que ya tenías
 export interface AppSettings {
   prices: {
     adultPerDay: number;
     childPerDay: number;
   };
+  fixedCosts: FixedCost[];  // NUEVO - Array flexible de costos fijos
   limits: {
     childMaxAge: number;
     minDaysToBook: number;

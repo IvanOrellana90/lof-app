@@ -1,9 +1,10 @@
 import { Info } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
-import { strings } from '../../locales/es';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PricingRules = () => {
   const { settings } = useSettings();
+  const { strings } = useLanguage();
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">

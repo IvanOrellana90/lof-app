@@ -1,8 +1,7 @@
 import { 
   collection, 
   addDoc, 
-  getDocs, 
-  getDoc,
+  getDocs,
   query, 
   orderBy, 
   where, // <--- IMPORTANTE: Necesitamos 'where' para filtrar

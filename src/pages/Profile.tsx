@@ -5,17 +5,18 @@ import { doc, updateDoc } from 'firebase/firestore'; // <--- Importante para la 
 import { auth, db } from '../services/firebase';     // <--- Importamos db
 import { toast } from 'sonner';
 import { User, Mail, Save, Loader2 } from 'lucide-react';
-import { strings } from '../locales/es';
+import { useLanguage } from '../context/LanguageContext';
 
 const Profile = () => {
   const { user, refreshUser } = useAuth();
+  const { strings } = useLanguage();
   // Estado local para el input del nombre
   const [name, setName] = useState(user?.displayName || '');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleUpdate = async () => {
     if (!auth.currentUser || !user?.uid) return;
-    
+
     // Validación simple
     if (name.trim() === '') {
       toast.error("El nombre no puede estar vacío");
@@ -23,7 +24,7 @@ const Profile = () => {
     }
 
     setIsSaving(true);
-    
+
     try {
       // 1. Actualizar en Firebase Authentication (Sesión actual)
       await updateProfile(auth.currentUser, {
@@ -33,12 +34,12 @@ const Profile = () => {
       // 2. Actualizar en Firestore (Base de datos persistente)
       // Esto es CRUCIAL porque tu AuthContext lee de aquí al iniciar
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { 
-        displayName: name 
+      await updateDoc(userRef, {
+        displayName: name
       });
 
       toast.success(strings.profile.successUpdate);
-      
+
       await refreshUser();
 
     } catch (error) {
@@ -52,7 +53,7 @@ const Profile = () => {
   return (
     <div className="px-4 py-8">
       <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-        
+
         {/* Encabezado con Foto */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-white shadow-lg overflow-hidden mb-4 flex items-center justify-center">
@@ -70,7 +71,7 @@ const Profile = () => {
 
         {/* Formulario */}
         <div className="space-y-6">
-          
+
           {/* Campo: Correo (Deshabilitado) */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -78,10 +79,10 @@ const Profile = () => {
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
-              <input 
-                type="email" 
-                disabled 
-                value={user?.email || ''} 
+              <input
+                type="email"
+                disabled
+                value={user?.email || ''}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed"
               />
             </div>
@@ -97,9 +98,9 @@ const Profile = () => {
             </label>
             <div className="relative">
               <User className="absolute left-3 top-3 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                value={name} 
+              <input
+                type="text"
+                value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-lof-500 focus:border-lof-500 outline-none transition-all text-slate-900"
                 placeholder="Tu nombre completo"
@@ -108,7 +109,7 @@ const Profile = () => {
           </div>
 
           {/* Botón Guardar */}
-          <button 
+          <button
             onClick={handleUpdate}
             disabled={isSaving || name === user?.displayName}
             className="w-full flex items-center justify-center gap-2 bg-lof-600 hover:bg-lof-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-lof-500/20 disabled:shadow-none"
