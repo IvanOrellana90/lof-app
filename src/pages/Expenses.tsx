@@ -8,7 +8,7 @@ import { getBookings, type Booking } from '../services/bookingService';
 import { getAllUsers, type UserData } from '../services/userService';
 import Avatar from '../components/ui/Avatar';
 import { getPropertyById } from '../services/propertyService';
-import { Plus, Tag, DollarSign, Trash2, Users, Receipt, UserCog, TrendingUp, Home, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Expenses = () => {
@@ -737,7 +737,7 @@ const Expenses = () => {
                         <span className="bg-white/60 px-2 py-1 rounded text-slate-700">
                           {tag.sharePercentage}% Variable
                         </span>
-                        {tag.fixedFee > 0 && (
+                        {(tag.fixedFee ?? 0) > 0 && (
                           <span className="bg-white/60 px-2 py-1 rounded text-slate-700">
                             ${tagFixedTotal.toLocaleString('es-CL')} Fijo
                           </span>
