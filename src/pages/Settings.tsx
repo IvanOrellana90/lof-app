@@ -5,7 +5,7 @@ import { saveSettings, type AppSettings } from '../services/settingsService';
 // Importamos las funciones de propiedad
 import { getPropertyById, updateAllowedEmails } from '../services/propertyService';
 import { toast } from 'sonner';
-import { Save, DollarSign, Baby, CreditCard, Users, Plus, Trash2, Mail, Receipt, Globe } from 'lucide-react'; // Nuevos iconos
+import { Save, DollarSign, Baby, CreditCard, Users, Plus, Trash2, Mail, Receipt } from 'lucide-react'; // Nuevos iconos
 import { useLanguage } from '../context/LanguageContext';
 
 const Settings = () => {

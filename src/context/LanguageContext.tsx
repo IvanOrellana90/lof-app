@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { strings as esStrings } from '../locales/es';
 import { strings as enStrings } from '../locales/en';
 

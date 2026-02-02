@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useSettings } from '../context/SettingsContext';
+
 import { useLanguage } from '../context/LanguageContext';
 import {
   getSharedExpenses,
@@ -22,12 +22,12 @@ import type {
   MemberShare
 } from '../services/expensesService';
 import { getPropertyById } from '../services/propertyService';
-import { Plus, Tag, DollarSign, Trash2, Users, Receipt, UserCog, Calculator } from 'lucide-react';
+import { Plus, Tag, DollarSign, Trash2, Users, Receipt, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Expenses = () => {
   const { propertyId } = useParams();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const { strings } = useLanguage();
 
   // Data State
