@@ -2,18 +2,23 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { saveSettings, type AppSettings } from '../services/settingsService';
-import { getPropertyById, updateAllowedEmails } from '../services/propertyService';
+import { getPropertyById, updateAllowedEmails, updatePropertyAdmins } from '../services/propertyService';
+import { getAllUsers, type UserData } from '../services/userService';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
-import { Save, DollarSign, Baby, CreditCard, Users, Plus, Trash2, Mail, Receipt, AlertCircle } from 'lucide-react';
+import { Save, DollarSign, Baby, CreditCard, Users, Plus, Trash2, Mail, Receipt, AlertCircle, UserCog, Check } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const Settings = () => {
+  const { user: currentUser } = useAuth();
   const { propertyId } = useParams();
   const { settings, refreshSettings } = useSettings();
   const { strings, language, setLanguage } = useLanguage();
 
   const [formData, setFormData] = useState<AppSettings>(settings);
   const [allowedEmails, setAllowedEmails] = useState<string[]>([]);
+  const [propertyAdmins, setPropertyAdmins] = useState<string[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -30,15 +35,21 @@ const Settings = () => {
       }
     });
 
-    const loadEmails = async () => {
+    const loadData = async () => {
       if (propertyId) {
-        const prop = await getPropertyById(propertyId);
-        if (prop && prop.allowedEmails) {
-          setAllowedEmails(prop.allowedEmails);
+        const [prop, usersData] = await Promise.all([
+          getPropertyById(propertyId),
+          getAllUsers()
+        ]);
+
+        if (prop) {
+          setAllowedEmails(prop.allowedEmails || []);
+          setPropertyAdmins(prop.admins || []);
         }
+        setUsers(usersData);
       }
     };
-    loadEmails();
+    loadData();
   }, [settings, propertyId]);
 
   // Detectar cambios en formData
@@ -148,6 +159,44 @@ const Settings = () => {
         toast.success("Miembro eliminado");
       } else {
         toast.error("Error al eliminar miembro");
+      }
+    } catch (error) {
+      toast.error("Error al guardar");
+    }
+  };
+
+  const handleToggleAdmin = async (email: string) => {
+    if (!propertyId) return;
+
+    // Buscar al usuario por email para obtener su UID
+    const targetUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (!targetUser) {
+      toast.error("El usuario debe registrarse primero para ser admin");
+      return;
+    }
+
+    const isAdmin = propertyAdmins.includes(targetUser.uid);
+    let updatedAdmins: string[];
+
+    if (isAdmin) {
+      // No permitir que el usuario actual se quite a sí mismo de admin
+      if (targetUser.uid === currentUser?.uid) {
+        toast.error("No puedes quitarte el permiso de admin a ti mismo");
+        return;
+      }
+      updatedAdmins = propertyAdmins.filter(uid => uid !== targetUser.uid);
+    } else {
+      updatedAdmins = [...propertyAdmins, targetUser.uid];
+    }
+
+    try {
+      const result = await updatePropertyAdmins(propertyId, updatedAdmins);
+      if (result.success) {
+        setPropertyAdmins(updatedAdmins);
+        toast.success(isAdmin ? "Permiso de admin quitado" : "Usuario ahora es admin");
+      } else {
+        toast.error("Error al actualizar permisos");
       }
     } catch (error) {
       toast.error("Error al guardar");
@@ -276,23 +325,51 @@ const Settings = () => {
                   </p>
                 )}
 
-                {allowedEmails.map((email) => (
-                  <div key={email} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 group hover:border-slate-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs">
-                        {email.charAt(0).toUpperCase()}
+                {allowedEmails.map((email) => {
+                  const registeredUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+                  const isAdmin = registeredUser && propertyAdmins.includes(registeredUser.uid);
+
+                  return (
+                    <div key={email} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 group hover:border-slate-300 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs relative">
+                          {email.charAt(0).toUpperCase()}
+                          {isAdmin && (
+                            <div className="absolute -top-1 -right-1 bg-lof-600 border-2 border-white rounded-full p-0.5" title="Admin">
+                              <Check size={8} className="text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-slate-700 font-medium text-sm">{email}</span>
+                          {!registeredUser ? (
+                            <span className="text-[10px] text-slate-400">Sin registrar</span>
+                          ) : (
+                            <span className="text-[10px] text-lof-600 font-medium">{isAdmin ? 'Administrador' : 'Miembro'}</span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-slate-700 font-medium text-sm">{email}</span>
+                      <div className="flex items-center gap-1">
+                        {registeredUser && (
+                          <button
+                            onClick={() => handleToggleAdmin(email)}
+                            className={`p-2 rounded-lg transition-colors ${isAdmin ? 'text-lof-600 hover:bg-lof-50' : 'text-slate-400 hover:text-lof-600 hover:bg-lof-50'}`}
+                            title={isAdmin ? "Quitar admin" : "Hacer admin"}
+                          >
+                            <UserCog size={16} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleRemoveEmail(email)}
+                          className="text-slate-400 hover:text-red-500 p-2 transition-colors"
+                          title="Eliminar acceso"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleRemoveEmail(email)}
-                      className="text-slate-400 hover:text-red-500 p-2 transition-colors"
-                      title="Eliminar acceso"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
