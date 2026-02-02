@@ -26,10 +26,25 @@ const PricingRules = () => {
             ${settings.prices.childPerDay.toLocaleString('es-CL')} <span className="text-xs text-slate-400 font-normal">/día</span>
           </span>
         </div>
-        <div className="bg-orange-50 p-3 rounded-lg mt-2">
+        <div className="bg-orange-50 p-3 rounded-lg mt-2 space-y-2">
           <p className="text-xs text-orange-700">
             * Niños menores de {settings.limits.childMaxAge} años no pagan.
           </p>
+          {(settings.fixedCosts || []).length > 0 && (
+            <div className="pt-2 border-t border-orange-100">
+              <p className="text-[10px] uppercase font-bold text-orange-800 mb-2 tracking-wider">Otros Cargos:</p>
+              <div className="space-y-1.5">
+                {settings.fixedCosts.map(cost => (
+                  <div key={cost.id} className="flex justify-between items-center text-xs">
+                    <span className="text-orange-900/70">
+                      {cost.name} {cost.isOptional && <span className="text-[9px] bg-orange-200 px-1 rounded uppercase">Opcional</span>}
+                    </span>
+                    <span className="font-bold text-orange-900">${cost.value.toLocaleString('es-CL')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

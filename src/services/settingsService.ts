@@ -7,6 +7,7 @@ export interface FixedCost {
   id: string;
   name: string;
   value: number;
+  isOptional?: boolean; // NUEVO: Si es opcional o obligatorio
 }
 
 // Reutilizamos las interfaces que ya tenías

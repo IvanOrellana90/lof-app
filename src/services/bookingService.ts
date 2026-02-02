@@ -14,29 +14,31 @@ import { type DateRange } from 'react-day-picker';
 
 export interface Booking {
   id: string;
-  propertyId: string; // <--- NUEVO CAMPO
+  propertyId: string;
   userId: string;
   userName: string;
   startDate: Date;
   endDate: Date;
   status: 'pending' | 'confirmed' | 'rejected';
   totalCost: number;
+  selectedOptionalFees?: string[]; // IDs de costos opcionales seleccionados
 }
 
 // 1. Crear Reserva (AHORA RECIBE propertyId)
 export const createBooking = async (
-  propertyId: string, // <--- Nuevo parámetro
+  propertyId: string,
   range: DateRange,
   adults: number,
   children: number,
   totalCost: number,
-  user: { uid: string, name: string }
+  user: { uid: string, name: string },
+  selectedOptionalFees: string[] = [] // Nuevo parámetro
 ) => {
   try {
     if (!range.from || !range.to) throw new Error("Fechas incompletas");
 
     const bookingPayload = {
-      propertyId, // <--- Guardamos la referencia
+      propertyId,
       userId: user.uid,
       userName: user.name,
       startDate: Timestamp.fromDate(range.from),
@@ -44,6 +46,7 @@ export const createBooking = async (
       adults,
       children,
       totalCost,
+      selectedOptionalFees, // Guardamos la selección
       status: 'pending',
       createdAt: Timestamp.now()
     };

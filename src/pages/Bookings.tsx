@@ -36,6 +36,7 @@ const Bookings = () => {
   // --- ESTADOS ---
   const [range, setRange] = useState<DateRange | undefined>();
   const [counts, setCounts] = useState({ adults: 1, children: 0 });
+  const [selectedOptionalIds, setSelectedOptionalIds] = useState<string[]>([]);
 
   // Estados de carga y datos
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,10 +96,17 @@ const Bookings = () => {
     (counts.children * PRICE_CHILD)
   );
 
-  // Costos fijos (suma de todos los items del array) - con validación
-  const fixedCost = (settings.fixedCosts || []).reduce((sum, cost) => sum + cost.value, 0);
+  // Costos fijos obligatorios
+  const mandatoryFixedCost = (settings.fixedCosts || [])
+    .filter(cost => !cost.isOptional)
+    .reduce((sum, cost) => sum + cost.value, 0);
 
-  const totalCost = variableCost + fixedCost;
+  // Costos opcionales seleccionados
+  const selectedOptionalCost = (settings.fixedCosts || [])
+    .filter(cost => selectedOptionalIds.includes(cost.id))
+    .reduce((sum, cost) => sum + cost.value, 0);
+
+  const totalCost = variableCost + mandatoryFixedCost + selectedOptionalCost;
 
   const updateCount = (type: 'adults' | 'children', delta: number) => {
     setCounts(prev => {
@@ -122,7 +130,8 @@ const Bookings = () => {
       counts.adults,
       counts.children,
       totalCost,
-      { uid: user!.uid, name: user!.displayName || 'Usuario' }
+      { uid: user!.uid, name: user!.displayName || 'Usuario' },
+      selectedOptionalIds
     );
 
     toast.dismiss(toastId);
@@ -136,6 +145,7 @@ const Bookings = () => {
       // Limpiamos formulario y recargamos la lista para ver la solicitud
       setRange(undefined);
       setCounts({ adults: 1, children: 0 });
+      setSelectedOptionalIds([]);
       loadData();
     } else {
       toast.error("Error", {
@@ -378,13 +388,40 @@ const Bookings = () => {
                     <span className="font-medium text-slate-800">${variableCost.toLocaleString('es-CL')}</span>
                   </div>
 
-                  {/* Mostrar cada costo fijo individualmente */}
-                  {(settings.fixedCosts || []).map((cost) => (
+                  {/* Costos Obligatorios */}
+                  {(settings.fixedCosts || []).filter(c => !c.isOptional).map((cost) => (
                     <div key={cost.id} className="flex justify-between items-center text-sm">
                       <span className="text-slate-600">{cost.name}</span>
                       <span className="font-medium text-slate-800">${cost.value.toLocaleString('es-CL')}</span>
                     </div>
                   ))}
+
+                  {/* Costos Opcionales (Seleccionables) */}
+                  {(settings.fixedCosts || []).filter(c => c.isOptional).length > 0 && (
+                    <div className="pt-2 space-y-2">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Servicios Opcionales</p>
+                      {(settings.fixedCosts || []).filter(c => c.isOptional).map((cost) => (
+                        <label key={cost.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-100 hover:bg-white cursor-pointer transition-all">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedOptionalIds.includes(cost.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOptionalIds([...selectedOptionalIds, cost.id]);
+                                } else {
+                                  setSelectedOptionalIds(selectedOptionalIds.filter(id => id !== cost.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-lof-600 rounded border-slate-300 focus:ring-lof-500"
+                            />
+                            <span className="text-sm text-slate-700">{cost.name}</span>
+                          </div>
+                          <span className="text-sm font-bold text-slate-900">${cost.value.toLocaleString('es-CL')}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-lof-200 mb-3" />

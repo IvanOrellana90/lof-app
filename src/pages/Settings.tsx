@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { saveSettings, type AppSettings } from '../services/settingsService';
 import { getPropertyById, updateAllowedEmails } from '../services/propertyService';
@@ -9,7 +9,6 @@ import { useLanguage } from '../context/LanguageContext';
 
 const Settings = () => {
   const { propertyId } = useParams();
-  const navigate = useNavigate();
   const { settings, refreshSettings } = useSettings();
   const { strings, language, setLanguage } = useLanguage();
 
@@ -79,7 +78,8 @@ const Settings = () => {
     const newCost = {
       id: `fc-${Date.now()}`,
       name: "",
-      value: 0
+      value: 0,
+      isOptional: false
     };
     setFormData(prev => ({
       ...prev,
@@ -94,7 +94,7 @@ const Settings = () => {
     }));
   };
 
-  const handleFixedCostChange = (id: string, field: 'name' | 'value', value: string | number) => {
+  const handleFixedCostChange = (id: string, field: 'name' | 'value' | 'isOptional', value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       fixedCosts: prev.fixedCosts.map(cost =>
@@ -378,6 +378,15 @@ const Settings = () => {
                       placeholder="Monto"
                       className="w-32 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lof-500 outline-none"
                     />
+                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={cost.isOptional}
+                        onChange={(e) => handleFixedCostChange(cost.id, 'isOptional', e.target.checked)}
+                        className="w-4 h-4 text-lof-600 rounded border-slate-300 focus:ring-lof-500"
+                      />
+                      <span className="text-xs font-medium text-slate-600 uppercase tracking-tight">Opcional</span>
+                    </label>
                     <button
                       onClick={() => removeFixedCost(cost.id)}
                       className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
