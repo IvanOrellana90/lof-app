@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Home, Calendar, Wallet, Menu, X, LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import Avatar from '../ui/Avatar';
 import logo from '../../../public/images/logo.png';
 
 const Navbar = () => {
@@ -83,15 +84,7 @@ const Navbar = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 focus:outline-none hover:opacity-80 transition-opacity"
               >
-                <div className="w-9 h-9 rounded-full bg-slate-200 border border-slate-100 overflow-hidden">
-                  {user?.photoURL ? (
-                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-lof-100 text-lof-700 font-bold">
-                      {user?.displayName?.charAt(0) || 'U'}
-                    </div>
-                  )}
-                </div>
+                <Avatar src={user?.photoURL} name={user?.displayName || 'U'} size="md" />
               </button>
 
               {isProfileOpen && (

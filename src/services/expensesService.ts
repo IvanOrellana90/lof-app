@@ -20,6 +20,7 @@ export interface MemberTag {
   sharePercentage: number; // 0-100
   color: string; // Para UI (ej: "blue", "purple")
   createdAt: Date;
+  fixedFee?: number;
 }
 
 // División de miembros (tabla separada)
@@ -112,28 +113,51 @@ export const updateMemberShare = async (shareId: string, updates: Partial<Member
 export const calculateMemberPayments = (
   expenses: SharedExpense[],
   shares: MemberShare[],
-  tags: MemberTag[]
+  tags: MemberTag[],
+  allowedEmails: string[]
 ): Record<string, number> => {
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const payments: Record<string, number> = {};
 
-  shares.forEach(share => {
+  // Filtrar solo los miembros que están actualmente permitidos en la propiedad
+  const activeShares = shares.filter(share => allowedEmails.includes(share.memberEmail));
+
+  // 1. Contar miembros por tag para dividir el % del grupo (solo miembros activos)
+  const tagCounts: Record<string, number> = {};
+  activeShares.forEach(share => {
+    if (share.tagId) {
+      tagCounts[share.tagId] = (tagCounts[share.tagId] || 0) + 1;
+    }
+  });
+
+  activeShares.forEach(share => {
     // Prioridad 1: Monto custom (override manual)
     if (share.customAmount !== undefined && share.customAmount !== null) {
       payments[share.memberEmail] = share.customAmount;
+      console.log(`Email ${share.memberEmail}: Custom Amount ${share.customAmount}`);
     }
     // Prioridad 2: Tag asignado
     else if (share.tagId) {
       const tag = tags.find(t => t.id === share.tagId);
       if (tag) {
-        payments[share.memberEmail] = (totalExpenses * tag.sharePercentage) / 100;
+        const memberCount = tagCounts[share.tagId] || 1;
+
+        // Cálculo: (Gasto Variable Total * % del Tag) / Cantidad de Miembros en ese Tag
+        const variablePart = ((totalExpenses * tag.sharePercentage) / 100) / memberCount;
+
+        // Sumar Cuota Fija del Tag
+        const fixedPart = tag.fixedFee || 0;
+
+        payments[share.memberEmail] = Math.round(variablePart + fixedPart);
+        console.log(`Email ${share.memberEmail}: Tag ${tag.name}, Count ${memberCount}, Result ${payments[share.memberEmail]}`);
       } else {
         payments[share.memberEmail] = 0; // Tag no encontrado
       }
     }
     // Prioridad 3: Porcentaje directo (legacy or fallback)
     else if (share.sharePercentage !== undefined) {
-      payments[share.memberEmail] = (totalExpenses * share.sharePercentage) / 100;
+      payments[share.memberEmail] = Math.round((totalExpenses * share.sharePercentage) / 100);
+      console.log(`Email ${share.memberEmail}: Percentage ${share.sharePercentage}%, Result ${payments[share.memberEmail]}`);
     } else {
       payments[share.memberEmail] = 0;
     }

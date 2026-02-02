@@ -1,13 +1,13 @@
-import { 
-  collection, 
-  addDoc, 
+import {
+  collection,
+  addDoc,
   getDocs,
-  query, 
-  orderBy, 
+  query,
+  orderBy,
   where, // <--- IMPORTANTE: Necesitamos 'where' para filtrar
-  Timestamp, 
-  doc, 
-  updateDoc 
+  Timestamp,
+  doc,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { type DateRange } from 'react-day-picker';
@@ -20,14 +20,15 @@ export interface Booking {
   startDate: Date;
   endDate: Date;
   status: 'pending' | 'confirmed' | 'rejected';
+  totalCost: number;
 }
 
 // 1. Crear Reserva (AHORA RECIBE propertyId)
 export const createBooking = async (
   propertyId: string, // <--- Nuevo parámetro
-  range: DateRange, 
-  adults: number, 
-  children: number, 
+  range: DateRange,
+  adults: number,
+  children: number,
   totalCost: number,
   user: { uid: string, name: string }
 ) => {
@@ -61,11 +62,11 @@ export const getBookings = async (propertyId: string): Promise<Booking[]> => {
   try {
     // A. Query filtrada: Solo reservas de ESTA propiedad
     const q = query(
-      collection(db, "bookings"), 
+      collection(db, "bookings"),
       where("propertyId", "==", propertyId), // <--- FILTRO CLAVE
       orderBy("startDate", "asc")
     );
-    
+
     const bookingsSnap = await getDocs(q);
 
     // B. Pedimos usuarios (Esto se mantiene igual para resolver nombres)
@@ -89,7 +90,8 @@ export const getBookings = async (propertyId: string): Promise<Booking[]> => {
         userName: currentDisplayName,
         status: data.status || 'confirmed',
         startDate: startDate,
-        endDate: endDate
+        endDate: endDate,
+        totalCost: data.totalCost || 0
       } as Booking;
     });
   } catch (error) {

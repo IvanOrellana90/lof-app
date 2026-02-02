@@ -32,7 +32,7 @@ const PropertyGuard = ({ children, requireAdmin = false }: PropertyGuardProps) =
         if (!docSnap.exists()) {
           toast.error("La propiedad no existe");
           setAccess('denied');
-          navigate('/'); 
+          navigate('/');
           return;
         }
 
@@ -48,23 +48,23 @@ const PropertyGuard = ({ children, requireAdmin = false }: PropertyGuardProps) =
 
         // LÓGICA DE DECISIÓN
         if (requireAdmin) {
-            // Si la ruta exige admin y NO lo es -> Fuera
-            if (!isAdmin) {
-                toast.error("Acceso denegado: Se requiere ser Administrador");
-                setAccess('denied');
-                navigate(`/property/${propertyId}`); // Lo devolvemos al home de la propiedad
-            } else {
-                setAccess('allowed');
-            }
+          // Si la ruta exige admin y NO lo es -> Fuera
+          if (!isAdmin) {
+            toast.error("Acceso denegado: Se requiere ser Administrador");
+            setAccess('denied');
+            navigate(`/property/${propertyId}`); // Lo devolvemos al home de la propiedad
+          } else {
+            setAccess('allowed');
+          }
         } else {
-            // Si es ruta normal, basta con ser miembro
-            if (!isMember) {
-                toast.error("No tienes acceso a esta propiedad");
-                setAccess('denied');
-                navigate('/'); // Lo devolvemos al dashboard general
-            } else {
-                setAccess('allowed');
-            }
+          // Si es ruta normal, basta con ser miembro
+          if (!isMember) {
+            toast.error("No tienes acceso a esta propiedad");
+            setAccess('denied');
+            navigate('/'); // Lo devolvemos al dashboard general
+          } else {
+            setAccess('allowed');
+          }
         }
 
       } catch (error) {
@@ -81,8 +81,8 @@ const PropertyGuard = ({ children, requireAdmin = false }: PropertyGuardProps) =
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-            <Loader2 className="w-10 h-10 animate-spin text-lof-600 mx-auto mb-4" />
-            <p className="text-slate-500">Verificando permisos...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-lof-600 mx-auto mb-4" />
+          <p className="text-slate-500">Verificando permisos...</p>
         </div>
       </div>
     );

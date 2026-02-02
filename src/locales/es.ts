@@ -182,6 +182,8 @@ export const strings = {
     noMembers: "No hay miembros registrados",
     tagCreated: "Tag creado correctamente",
     tagDeleted: "Tag eliminado",
+    tagUpdated: "Tag actualizado",
+    tagSummaryTitle: "Resumen por Etiquetas",
     expenseCreated: "Gasto creado correctamente",
     expenseDeleted: "Gasto eliminado",
     shareUpdated: "Asignación actualizada",
