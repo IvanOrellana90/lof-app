@@ -248,5 +248,9 @@ export const strings = {
       new_expense: (title: string) => `New expense registered: ${title}`,
       added_to_property: (name: string) => `You have been included in the property: ${name}`,
     }
+  },
+  footer: {
+    rights: "All rights reserved",
+    madeWithLove: "Made with love by the Lof team"
   }
 };
