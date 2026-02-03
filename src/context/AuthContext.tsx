@@ -64,7 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        console.log("✅ Usuario detectado:", firebaseUser.email);
 
         try {
           const userRef = doc(db, "users", firebaseUser.uid);

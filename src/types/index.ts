@@ -32,3 +32,24 @@ export interface Expense {
   date: string;
   proofUrl?: string; // URL de la foto de la boleta
 }
+
+export type NotificationType =
+  | 'booking_request'
+  | 'booking_approved'
+  | 'booking_cancelled'
+  | 'new_expense'
+  | 'added_to_property';
+
+export interface Notification {
+  id: string;
+  userId: string; // Recipient
+  type: NotificationType;
+  data?: {
+    bookingId?: string;
+    expenseId?: string;
+    propertyName?: string;
+    userName?: string;
+  };
+  isRead: boolean;
+  createdAt: any; // Firestore Timestamp
+}

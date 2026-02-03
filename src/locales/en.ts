@@ -236,5 +236,17 @@ export const strings = {
     upcomingBookings: "Upcoming Bookings",
     occupied: "Occupied",
     available: "Available"
+  },
+  notifications: {
+    title: "Notifications",
+    empty: "You have no notifications",
+    markAllAsRead: "Mark all as read",
+    types: {
+      booking_request: (name: string) => `New booking request from ${name}`,
+      booking_approved: "Your booking has been approved",
+      booking_cancelled: "Your booking has been cancelled",
+      new_expense: (title: string) => `New expense registered: ${title}`,
+      added_to_property: (name: string) => `You have been included in the property: ${name}`,
+    }
   }
 };

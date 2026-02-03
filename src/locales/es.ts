@@ -236,5 +236,17 @@ export const strings = {
     upcomingBookings: "Próximos Arriendos",
     occupied: "Ocupada",
     available: "Disponible"
+  },
+  notifications: {
+    title: "Notificaciones",
+    empty: "No tienes notificaciones",
+    markAllAsRead: "Marcar todas como leídas",
+    types: {
+      booking_request: (name: string) => `Nueva solicitud de reserva de ${name}`,
+      booking_approved: "Tu reserva ha sido aprobada",
+      booking_cancelled: "Tu reserva ha sido cancelada",
+      new_expense: (title: string) => `Nuevo gasto registrado: ${title}`,
+      added_to_property: (name: string) => `Has sido incluido en la propiedad: ${name}`,
+    }
   }
 };

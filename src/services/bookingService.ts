@@ -7,10 +7,13 @@ import {
   where, // <--- IMPORTANTE: Necesitamos 'where' para filtrar
   Timestamp,
   doc,
+  getDoc,
   updateDoc,
   deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { notificationService } from './notificationService';
+import { getPropertyById } from './propertyService';
 import { type DateRange } from 'react-day-picker';
 
 export interface Booking {
@@ -56,6 +59,25 @@ export const createBooking = async (
     };
 
     const docRef = await addDoc(collection(db, "bookings"), bookingPayload);
+
+    // Notificar a los administradores de la propiedad
+    const property = await getPropertyById(propertyId);
+    if (property && property.admins) {
+      for (const adminId of property.admins) {
+        if (adminId !== user.uid) { // No notificarse a sí mismo si es admin
+          await notificationService.createNotification({
+            userId: adminId,
+            type: 'booking_request',
+            data: {
+              bookingId: docRef.id,
+              userName: user.name,
+              propertyName: property.name
+            }
+          });
+        }
+      }
+    }
+
     return { success: true, id: docRef.id };
 
   } catch (error) {
@@ -133,6 +155,20 @@ export const updateBookingStatus = async (bookingId: string, newStatus: 'confirm
   try {
     const bookingRef = doc(db, "bookings", bookingId);
     await updateDoc(bookingRef, { status: newStatus });
+
+    // Notificar al usuario que solicitó la reserva
+    const bookingSnap = await getDoc(bookingRef);
+    if (bookingSnap.exists()) {
+      const bookingData = bookingSnap.data();
+      await notificationService.createNotification({
+        userId: bookingData.userId,
+        type: newStatus === 'confirmed' ? 'booking_approved' : 'booking_cancelled',
+        data: {
+          bookingId: bookingId,
+        }
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error al actualizar estado:", error);

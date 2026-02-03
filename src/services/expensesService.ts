@@ -1,5 +1,8 @@
 import { collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { notificationService } from './notificationService';
+import { getPropertyById } from './propertyService';
+import { getDocs as getDocsFirestore, query as queryFirestore, collection as collectionFirestore, where as whereFirestore } from 'firebase/firestore';
 
 // Gasto compartido individual
 export interface SharedExpense {
@@ -58,6 +61,34 @@ export const createSharedExpense = async (propertyId: string, expense: Omit<Shar
     updatedAt: Timestamp.now()
   };
   const docRef = await addDoc(collection(db, "sharedExpenses"), payload);
+
+  // Notificar a todos los miembros de la propiedad
+  try {
+    const property = await getPropertyById(propertyId);
+    if (property && property.allowedEmails) {
+      // Buscar UIDs de los usuarios por email
+      const usersQuery = queryFirestore(
+        collectionFirestore(db, "users"),
+        whereFirestore("email", "in", property.allowedEmails)
+      );
+      const usersSnap = await getDocsFirestore(usersQuery);
+
+      for (const userDoc of usersSnap.docs) {
+        await notificationService.createNotification({
+          userId: userDoc.id,
+          type: 'new_expense',
+          data: {
+            expenseId: docRef.id,
+            propertyName: property.name,
+            userName: expense.name // Usamos el nombre del gasto en el mensaje
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error sending expense notifications:", error);
+  }
+
   return { success: true, id: docRef.id };
 };
 
@@ -145,7 +176,6 @@ export const calculateMemberPayments = (
     // Prioridad 1: Monto custom (override manual)
     if (share.customAmount !== undefined && share.customAmount !== null) {
       payments[share.memberEmail] = share.customAmount;
-      console.log(`Email ${share.memberEmail}: Custom Amount ${share.customAmount}`);
     }
     // Prioridad 2: Tag asignado
     else if (share.tagId) {
@@ -160,7 +190,6 @@ export const calculateMemberPayments = (
         const fixedPart = tag.fixedFee || 0;
 
         payments[share.memberEmail] = Math.round(variablePart + fixedPart);
-        console.log(`Email ${share.memberEmail}: Tag ${tag.name}, Count ${memberCount}, Result ${payments[share.memberEmail]}`);
       } else {
         payments[share.memberEmail] = 0; // Tag no encontrado
       }
@@ -168,7 +197,6 @@ export const calculateMemberPayments = (
     // Prioridad 3: Porcentaje directo (legacy or fallback)
     else if (share.sharePercentage !== undefined) {
       payments[share.memberEmail] = Math.round((totalExpenses * share.sharePercentage) / 100);
-      console.log(`Email ${share.memberEmail}: Percentage ${share.sharePercentage}%, Result ${payments[share.memberEmail]}`);
     } else {
       payments[share.memberEmail] = 0;
     }

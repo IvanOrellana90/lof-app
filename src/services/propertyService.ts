@@ -11,7 +11,9 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { notificationService } from './notificationService';
 import { BUSINESS_RULES } from '../config/rules';
+import { getDocs as getDocsFirestore, query as queryFirestore, collection as collectionFirestore, where as whereFirestore } from 'firebase/firestore';
 
 export interface Property {
   id: string;
@@ -99,6 +101,32 @@ export const addAllowedEmail = async (propertyId: string, email: string) => {
     await updateDoc(propRef, {
       allowedEmails: arrayUnion(email.toLowerCase()) // arrayUnion evita duplicados
     });
+
+    // Notificar al usuario (si ya existe en el sistema)
+    try {
+      const propertySnap = await getDoc(propRef);
+      if (propertySnap.exists()) {
+        const propertyData = propertySnap.data();
+        const usersQuery = queryFirestore(
+          collectionFirestore(db, "users"),
+          whereFirestore("email", "==", email.toLowerCase())
+        );
+        const usersSnap = await getDocsFirestore(usersQuery);
+        if (!usersSnap.empty) {
+          const userDoc = usersSnap.docs[0];
+          await notificationService.createNotification({
+            userId: userDoc.id,
+            type: 'added_to_property',
+            data: {
+              propertyName: propertyData.name
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error sending property notification:", e);
+    }
+
     return { success: true };
   } catch (error) {
     return { success: false, error };
