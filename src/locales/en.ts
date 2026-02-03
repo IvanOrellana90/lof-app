@@ -111,6 +111,11 @@ export const strings = {
     toastRejected: "Request rejected",
     toastRejectedDesc: "The date has been released.",
     toastError: "Error updating status",
+    btnDelete: "Delete booking",
+    deleteConfirmTitle: "Delete booking?",
+    deleteConfirmDesc: "This action cannot be undone. The date will be released immediately.",
+    toastDeleted: "Booking deleted",
+    toastDeleteError: "Error deleting booking",
     details: {
       title: "Booking Details",
       guests: "Guests",

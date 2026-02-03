@@ -13,7 +13,9 @@ import {
   Plus,
   Loader2,
   Check,
-  Ban
+  Ban,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '../context/SettingsContext';
@@ -24,6 +26,7 @@ import {
   createBooking,
   getBookings,
   updateBookingStatus,
+  deleteBooking,
   type Booking
 } from '../services/bookingService';
 import { checkPropertyAdmin } from '../services/propertyService';
@@ -45,6 +48,9 @@ const Bookings = () => {
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
   const [isPropertyAdmin, setIsPropertyAdmin] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Nuevo: Estado para modal de confirmación de eliminación
+  const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
 
   const { settings, loading: loadingSettings } = useSettings();
 
@@ -177,6 +183,28 @@ const Bookings = () => {
     }
   };
 
+  const handleDeleteBooking = (booking: Booking) => {
+    setBookingToDelete(booking);
+  };
+
+  const confirmDeleteBooking = async () => {
+    if (!bookingToDelete) return;
+
+    const id = bookingToDelete.id;
+    setBookingToDelete(null); // Cerramos el modal inmediatamente
+
+    const toastId = toast.loading(strings.bookings.processing);
+    const res = await deleteBooking(id);
+    toast.dismiss(toastId);
+
+    if (res.success) {
+      toast.success(strings.bookings.toastDeleted);
+      loadData();
+    } else {
+      toast.error(strings.bookings.toastDeleteError);
+    }
+  };
+
   return (
     <div className="px-4 py-8">
       {/* Header */}
@@ -278,11 +306,30 @@ const Bookings = () => {
                             <Check size={18} />
                           </button>
                           <button
-                            onClick={() => handleStatusChange(booking.id, 'rejected')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(booking.id, 'rejected');
+                            }}
                             className="p-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                             title={strings.bookings.btnReject}
                           >
                             <Ban size={18} />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Botón de Eliminar (Siempre para Admin, pero separado) */}
+                      {!isPending && isPropertyAdmin && (
+                        <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:ml-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteBooking(booking);
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title={strings.bookings.btnDelete}
+                          >
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       )}
@@ -479,6 +526,43 @@ const Bookings = () => {
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
         />
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {bookingToDelete && (
+        <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-3xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                {strings.bookings.deleteConfirmTitle}
+              </h3>
+              <p className="text-slate-500 text-sm mb-8">
+                {strings.bookings.deleteConfirmDesc}
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setBookingToDelete(null)}
+                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                >
+                  {strings.common?.cancel || 'Cancelar'}
+                </button>
+                <button
+                  onClick={confirmDeleteBooking}
+                  className="py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/30"
+                >
+                  {strings.common?.delete || 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

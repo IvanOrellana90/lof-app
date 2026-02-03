@@ -7,7 +7,8 @@ import {
   where, // <--- IMPORTANTE: Necesitamos 'where' para filtrar
   Timestamp,
   doc,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { type DateRange } from 'react-day-picker';
@@ -59,6 +60,17 @@ export const createBooking = async (
 
   } catch (error) {
     console.error("Error al crear reserva: ", error);
+    return { success: false, error };
+  }
+};
+
+export const deleteBooking = async (bookingId: string) => {
+  try {
+    const bookingRef = doc(db, "bookings", bookingId);
+    await deleteDoc(bookingRef);
+    return { success: true };
+  } catch (error) {
+    console.error("Error al eliminar reserva:", error);
     return { success: false, error };
   }
 };

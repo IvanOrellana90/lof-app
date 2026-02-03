@@ -111,6 +111,11 @@ export const strings = {
     toastRejected: "Solicitud rechazada",
     toastRejectedDesc: "La fecha ha quedado liberada.",
     toastError: "Error al actualizar estado",
+    btnDelete: "Eliminar reserva",
+    deleteConfirmTitle: "¿Eliminar reserva?",
+    deleteConfirmDesc: "Esta acción no se puede deshacer. La fecha quedará liberada inmediatamente.",
+    toastDeleted: "Reserva eliminada",
+    toastDeleteError: "Error al eliminar la reserva",
     details: {
       title: "Detalles de la Reserva",
       guests: "Huéspedes",
