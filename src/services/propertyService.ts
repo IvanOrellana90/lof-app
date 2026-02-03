@@ -168,10 +168,15 @@ export const getPropertyById = async (propertyId: string): Promise<Property | nu
 export const updateAllowedEmails = async (propertyId: string, emails: string[]) => {
   try {
     const docRef = doc(db, "properties", propertyId);
+
+    // ✅ Convertir a lowercase y eliminar duplicados
     const lowerEmails = emails.map(e => e.toLowerCase());
+    const uniqueEmails = Array.from(new Set(lowerEmails));
+
     await updateDoc(docRef, {
-      allowedEmails: lowerEmails
+      allowedEmails: uniqueEmails
     });
+
     return { success: true };
   } catch (error) {
     console.error("Error updating emails:", error);

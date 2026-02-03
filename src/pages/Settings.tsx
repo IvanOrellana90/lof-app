@@ -125,14 +125,16 @@ const Settings = () => {
     }
 
     const lowerEmail = newEmail.trim().toLowerCase();
+
+    // ✅ Verificar duplicados antes de agregar
     if (allowedEmails.includes(lowerEmail)) {
       toast.error("Este correo ya está en la lista");
+      setNewEmail(""); // Limpiar el input
       return;
     }
 
     const updatedEmails = [...allowedEmails, lowerEmail];
 
-    // Guardar inmediatamente
     try {
       const result = await updateAllowedEmails(propertyId, updatedEmails);
       if (result.success) {

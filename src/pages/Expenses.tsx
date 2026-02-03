@@ -266,8 +266,6 @@ const Expenses = () => {
     if (!propertyId || !editingMember) return;
 
     try {
-      const existingShare = shares.find(s => s.memberEmail === editingMember);
-
       const shareData: any = {
         memberEmail: editingMember,
         propertyId
@@ -290,15 +288,50 @@ const Expenses = () => {
         shareData.tagId = null;
       }
 
-      if (existingShare) {
-        await updateMemberShare(existingShare.id, shareData);
+      // ✅ BUSCAR SHARE EXISTENTE POR: email + tagId (si aplica) + propertyId
+      let existingShare;
+
+      if (editShareData.useTag && editShareData.tagId) {
+        // Si usa tag, buscar por email + tagId + propertyId
+        existingShare = shares.find(s =>
+          s.memberEmail === editingMember &&
+          s.tagId === editShareData.tagId &&
+          s.propertyId === propertyId
+        );
       } else {
-        await createMemberShare(propertyId, shareData);
+        // Si usa customAmount, buscar por email + propertyId (sin importar tagId)
+        existingShare = shares.find(s =>
+          s.memberEmail === editingMember &&
+          s.propertyId === propertyId &&
+          s.customAmount !== null && s.customAmount !== undefined
+        );
       }
 
-      toast.success(strings.expenses.shareUpdated);
+      if (existingShare) {
+        // ✅ Actualizar share existente
+        await updateMemberShare(existingShare.id, shareData);
+        toast.success(strings.expenses.shareUpdated);
+      } else {
+        // ✅ Antes de crear, verificar duplicados en la DB (por si acaso)
+        const allShares = await getMemberShares(propertyId);
+        const duplicate = allShares.find(s =>
+          s.memberEmail === editingMember &&
+          s.tagId === shareData.tagId &&
+          s.propertyId === propertyId
+        );
+
+        if (duplicate) {
+          toast.error("Este miembro ya tiene asignado este tag");
+          return;
+        }
+
+        await createMemberShare(propertyId, shareData);
+        toast.success(strings.expenses.shareCreated);
+      }
+
       setEditingMember(null);
 
+      // Refrescar datos
       const [newShares, newTags] = await Promise.all([
         getMemberShares(propertyId),
         getMemberTags(propertyId)

@@ -132,22 +132,76 @@ export const getMemberShares = async (propertyId: string): Promise<MemberShare[]
 };
 
 export const createMemberShare = async (propertyId: string, share: Omit<MemberShare, 'id' | 'propertyId' | 'updatedAt'>) => {
-  const payload = {
-    ...share,
-    memberEmail: share.memberEmail.toLowerCase(),
-    propertyId,
-    updatedAt: Timestamp.now()
-  };
-  const docRef = await addDoc(collection(db, "memberShares"), payload);
-  return { success: true, id: docRef.id };
+  try {
+    const lowerEmail = share.memberEmail.toLowerCase();
+
+    // ✅ VERIFICAR DUPLICADOS ANTES DE CREAR
+    const sharesRef = collection(db, "memberShares");
+    const q = query(
+      sharesRef,
+      where("propertyId", "==", propertyId),
+      where("memberEmail", "==", lowerEmail),
+      where("tagId", "==", share.tagId || null)
+    );
+
+    const existingShares = await getDocs(q);
+
+    if (!existingShares.empty) {
+      // Ya existe un share idéntico, actualizar en lugar de crear
+      console.warn("⚠️ Share duplicado detectado, actualizando existente");
+      const existingId = existingShares.docs[0].id;
+
+      await updateMemberShare(existingId, share);
+
+      return {
+        success: true,
+        id: existingId,
+        wasUpdated: true // Indicar que fue actualizado, no creado
+      };
+    }
+
+    // No existe duplicado, crear nuevo
+    const payload = {
+      ...share,
+      memberEmail: lowerEmail,
+      propertyId,
+      updatedAt: Timestamp.now()
+    };
+
+    const docRef = await addDoc(collection(db, "memberShares"), payload);
+
+    return {
+      success: true,
+      id: docRef.id,
+      wasUpdated: false
+    };
+
+  } catch (error) {
+    console.error("Error creating member share:", error);
+    return { success: false, error };
+  }
 };
 
 export const updateMemberShare = async (shareId: string, updates: Partial<MemberShare>) => {
-  const shareRef = doc(db, "memberShares", shareId);
-  const data = { ...updates };
-  if (data.memberEmail) data.memberEmail = data.memberEmail.toLowerCase();
-  await updateDoc(shareRef, { ...data, updatedAt: Timestamp.now() });
-  return { success: true };
+  try {
+    const shareRef = doc(db, "memberShares", shareId);
+    const data = { ...updates };
+
+    if (data.memberEmail) {
+      data.memberEmail = data.memberEmail.toLowerCase();
+    }
+
+    await updateDoc(shareRef, {
+      ...data,
+      updatedAt: Timestamp.now()
+    });
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("Error updating member share:", error);
+    return { success: false, error };
+  }
 };
 
 // --- CALCULATION LOGIC ---
@@ -165,41 +219,56 @@ export const calculateMemberPayments = (
   const activeShares = shares.filter(share => allowedEmails.includes(share.memberEmail));
 
   // 1. Contar miembros por tag para dividir el % del grupo (solo miembros activos)
-  const tagCounts: Record<string, number> = {};
+  const tagMembers: Record<string, Set<string>> = {};
+
   activeShares.forEach(share => {
     if (share.tagId) {
-      tagCounts[share.tagId] = (tagCounts[share.tagId] || 0) + 1;
+      if (!tagMembers[share.tagId]) {
+        tagMembers[share.tagId] = new Set();
+      }
+      tagMembers[share.tagId].add(share.memberEmail);
     }
   });
 
+  const tagCounts: Record<string, number> = {};
+  Object.keys(tagMembers).forEach(tagId => {
+    tagCounts[tagId] = tagMembers[tagId].size;
+  });
+
+  console.log("tagCounts (unique members)", tagCounts);
+  console.log("tagMembers", Object.fromEntries(
+    Object.entries(tagMembers).map(([k, v]) => [k, Array.from(v)])
+  ));
+
+  const processedEmails = new Set<string>();
+
   activeShares.forEach(share => {
-    // Prioridad 1: Monto custom (override manual)
+    // Evitar procesar el mismo email dos veces
+    if (processedEmails.has(share.memberEmail)) {
+      return; // Skip duplicados
+    }
+
     if (share.customAmount !== undefined && share.customAmount !== null) {
       payments[share.memberEmail] = share.customAmount;
     }
-    // Prioridad 2: Tag asignado
     else if (share.tagId) {
       const tag = tags.find(t => t.id === share.tagId);
       if (tag) {
         const memberCount = tagCounts[share.tagId] || 1;
-
-        // Cálculo: (Gasto Variable Total * % del Tag) / Cantidad de Miembros en ese Tag
         const variablePart = ((totalExpenses * tag.sharePercentage) / 100) / memberCount;
-
-        // Sumar Cuota Fija del Tag
         const fixedPart = tag.fixedFee || 0;
-
         payments[share.memberEmail] = Math.round(variablePart + fixedPart);
       } else {
-        payments[share.memberEmail] = 0; // Tag no encontrado
+        payments[share.memberEmail] = 0;
       }
     }
-    // Prioridad 3: Porcentaje directo (legacy or fallback)
     else if (share.sharePercentage !== undefined) {
       payments[share.memberEmail] = Math.round((totalExpenses * share.sharePercentage) / 100);
     } else {
       payments[share.memberEmail] = 0;
     }
+
+    processedEmails.add(share.memberEmail);
   });
 
   return payments;
