@@ -103,6 +103,7 @@ export const getMemberShares = async (propertyId: string): Promise<MemberShare[]
 export const createMemberShare = async (propertyId: string, share: Omit<MemberShare, 'id' | 'propertyId' | 'updatedAt'>) => {
   const payload = {
     ...share,
+    memberEmail: share.memberEmail.toLowerCase(),
     propertyId,
     updatedAt: Timestamp.now()
   };
@@ -112,7 +113,9 @@ export const createMemberShare = async (propertyId: string, share: Omit<MemberSh
 
 export const updateMemberShare = async (shareId: string, updates: Partial<MemberShare>) => {
   const shareRef = doc(db, "memberShares", shareId);
-  await updateDoc(shareRef, { ...updates, updatedAt: Timestamp.now() });
+  const data = { ...updates };
+  if (data.memberEmail) data.memberEmail = data.memberEmail.toLowerCase();
+  await updateDoc(shareRef, { ...data, updatedAt: Timestamp.now() });
   return { success: true };
 };
 

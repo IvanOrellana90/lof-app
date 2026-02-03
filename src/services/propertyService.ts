@@ -33,7 +33,7 @@ export const createProperty = async (name: string, user: { uid: string, email: s
       name,
       ownerId: user.uid,
       admins: [user.uid], // El creador es admin automático
-      allowedEmails: [user.email], // El creador está permitido
+      allowedEmails: [user.email.toLowerCase()], // El creador está permitido
       settings: BUSINESS_RULES, // Copiamos las reglas default
       createdAt: Timestamp.now()
     };
@@ -68,7 +68,8 @@ export const getUserProperties = async (userId: string, userEmail: string | null
 
     // 2. Consulta B: Propiedades donde soy MIEMBRO (por Email)
     if (userEmail) {
-      const qMembers = query(propertiesRef, where("allowedEmails", "array-contains", userEmail));
+      const emailLower = userEmail.toLowerCase();
+      const qMembers = query(propertiesRef, where("allowedEmails", "array-contains", emailLower));
       const snapMembers = await getDocs(qMembers);
 
       snapMembers.docs.forEach(doc => {
@@ -96,7 +97,7 @@ export const addAllowedEmail = async (propertyId: string, email: string) => {
   try {
     const propRef = doc(db, "properties", propertyId);
     await updateDoc(propRef, {
-      allowedEmails: arrayUnion(email) // arrayUnion evita duplicados
+      allowedEmails: arrayUnion(email.toLowerCase()) // arrayUnion evita duplicados
     });
     return { success: true };
   } catch (error) {
@@ -139,8 +140,9 @@ export const getPropertyById = async (propertyId: string): Promise<Property | nu
 export const updateAllowedEmails = async (propertyId: string, emails: string[]) => {
   try {
     const docRef = doc(db, "properties", propertyId);
+    const lowerEmails = emails.map(e => e.toLowerCase());
     await updateDoc(docRef, {
-      allowedEmails: emails
+      allowedEmails: lowerEmails
     });
     return { success: true };
   } catch (error) {

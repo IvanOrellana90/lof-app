@@ -124,12 +124,13 @@ const Settings = () => {
       return;
     }
 
-    if (allowedEmails.includes(newEmail.trim())) {
+    const lowerEmail = newEmail.trim().toLowerCase();
+    if (allowedEmails.includes(lowerEmail)) {
       toast.error("Este correo ya está en la lista");
       return;
     }
 
-    const updatedEmails = [...allowedEmails, newEmail.trim()];
+    const updatedEmails = [...allowedEmails, lowerEmail];
 
     // Guardar inmediatamente
     try {

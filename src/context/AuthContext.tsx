@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { 
+import {
   signInWithPopup, // <--- VOLVEMOS A POPUP
-  signOut, 
+  signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userRef = doc(db, "users", auth.currentUser.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        setUser(userSnap.data() as UserProfile); 
+        setUser(userSnap.data() as UserProfile);
       }
     } catch (error) {
       console.error("Error refrescando usuario", error);
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         console.log("✅ Usuario detectado:", firebaseUser.email);
-        
+
         try {
           const userRef = doc(db, "users", firebaseUser.uid);
           const userSnap = await getDoc(userRef);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Crear usuario si es la primera vez
             const newUser: UserProfile = {
               uid: firebaseUser.uid,
-              email: firebaseUser.email,
+              email: firebaseUser.email?.toLowerCase() || null,
               displayName: firebaseUser.displayName,
               photoURL: firebaseUser.photoURL,
               role: 'member'
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Si falla Firestore, dejamos entrar al usuario igual
           setUser({
             uid: firebaseUser.uid,
-            email: firebaseUser.email,
+            email: firebaseUser.email?.toLowerCase() || null,
             displayName: firebaseUser.displayName,
             photoURL: firebaseUser.photoURL,
             role: 'member'
@@ -106,10 +106,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      login, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
       logout,
       isAdmin: user?.role === 'admin',
       refreshUser
