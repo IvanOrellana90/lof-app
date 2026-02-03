@@ -16,7 +16,8 @@ export const strings = {
     frequency: "Frequency",
     total: "Total",
     actions: "Actions",
-    none: "None"
+    none: "None",
+    today: "Today",
   },
   dashboard: {
     title: "My Properties",
@@ -206,7 +207,13 @@ export const strings = {
     labels: {
       manual: "Manual",
       unassigned: "Unassigned",
-      toPay: "To Pay"
+      toPay: "To Pay",
+      periodSelected: "Selected Period",
+      monthlyPayments: "Payments for",
+      totalFor: "TOTAL",
+      recurring: "Monthly recurring",
+      confirmedReservations: "confirmed reservations",
+      expensesAndRentals: "Expenses + rentals"
     }
   },
   houseStatus: {

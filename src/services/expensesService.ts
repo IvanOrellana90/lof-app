@@ -39,7 +39,15 @@ export interface MemberShare {
 export const getSharedExpenses = async (propertyId: string): Promise<SharedExpense[]> => {
   const q = query(collection(db, "sharedExpenses"), where("propertyId", "==", propertyId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SharedExpense));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate(),
+      updatedAt: data.updatedAt?.toDate()
+    } as SharedExpense;
+  });
 };
 
 export const createSharedExpense = async (propertyId: string, expense: Omit<SharedExpense, 'id' | 'propertyId' | 'createdAt' | 'updatedAt'>) => {

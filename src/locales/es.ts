@@ -17,6 +17,7 @@ export const strings = {
     total: "Total",
     actions: "Acciones",
     none: "Ninguno",
+    today: "Hoy",
   },
   dashboard: {
     title: "Mis Propiedades",
@@ -206,7 +207,13 @@ export const strings = {
     labels: {
       manual: "Manual",
       unassigned: "Sin Asignar",
-      toPay: "A Pagar"
+      toPay: "A Pagar",
+      periodSelected: "Periodo seleccionado",
+      monthlyPayments: "Pagos de",
+      totalFor: "TOTAL",
+      recurring: "Mensuales recurrentes",
+      confirmedReservations: "reservas confirmadas",
+      expensesAndRentals: "Gastos + arriendos"
     }
   },
   houseStatus: {

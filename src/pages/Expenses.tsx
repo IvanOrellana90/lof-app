@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePropertyAdmin } from '../hooks/usePropertyAdmin';
 
@@ -76,9 +76,6 @@ const Expenses = () => {
       if (propData?.allowedEmails) {
         setAllowedEmails(propData.allowedEmails);
       }
-
-      const payments = calculateMemberPayments(expensesData, sharesData, tagsData, propData?.allowedEmails || []);
-      setCalculatedPayments(payments);
     } catch (error) {
       console.error("Error loading expenses data:", error);
       toast.error("Error cargando los gastos");
@@ -86,6 +83,32 @@ const Expenses = () => {
       setLoading(false);
     }
   };
+
+  // Filtrar gastos por mes seleccionado
+  const filteredExpenses = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+
+    return expenses.filter(exp => {
+      if (!exp.createdAt) return false;
+      const createdDate = new Date(exp.createdAt);
+      const createdYear = createdDate.getFullYear();
+      const createdMonth = createdDate.getMonth() + 1;
+
+      // Un solo pago: solo el mes que se creó
+      if (exp.frequency === 'one-time') {
+        return createdYear === year && createdMonth === month;
+      }
+
+      // Recurrentes: desde el mes que se creó en adelante
+      return createdYear < year || (createdYear === year && createdMonth <= month);
+    });
+  }, [expenses, selectedMonth]);
+
+  // Recalcular pagos cuando cambian los gastos filtrados o la configuración de miembros
+  useEffect(() => {
+    const payments = calculateMemberPayments(filteredExpenses, shares, tags, allowedEmails);
+    setCalculatedPayments(payments);
+  }, [filteredExpenses, shares, tags, allowedEmails]);
 
   // Funciones para manejar el mes
   const getMonthName = (monthKey: string): string => {
@@ -197,8 +220,6 @@ const Expenses = () => {
       setShowExpenseModal(false);
       const updatedExpenses = await getSharedExpenses(propertyId);
       setExpenses(updatedExpenses);
-      const payments = calculateMemberPayments(updatedExpenses, shares, tags, allowedEmails);
-      setCalculatedPayments(payments);
     } catch (error) {
       console.error(error);
       toast.error(strings.expenses.errorCreateExpense);
@@ -212,8 +233,6 @@ const Expenses = () => {
       toast.success(strings.expenses.expenseDeleted);
       const updatedExpenses = expenses.filter(e => e.id !== id);
       setExpenses(updatedExpenses);
-      const payments = calculateMemberPayments(updatedExpenses, shares, tags, allowedEmails);
-      setCalculatedPayments(payments);
     } catch (error) {
       console.error(error);
       toast.error(strings.expenses.errorDeleteExpense);
@@ -277,13 +296,12 @@ const Expenses = () => {
       toast.success(strings.expenses.shareUpdated);
       setEditingMember(null);
 
-      const [updatedShares, updatedTags] = await Promise.all([
+      const [newShares, newTags] = await Promise.all([
         getMemberShares(propertyId),
         getMemberTags(propertyId)
       ]);
-      setShares(updatedShares);
-      const payments = calculateMemberPayments(expenses, updatedShares, updatedTags, allowedEmails);
-      setCalculatedPayments(payments);
+      setShares(newShares);
+      setTags(newTags);
 
     } catch (error) {
       console.error(error);
@@ -296,7 +314,7 @@ const Expenses = () => {
   }
 
   // Calcular totales
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalSharedPayments = Object.values(calculatedPayments).reduce((sum, val) => sum + val, 0);
   const totalRentalsThisMonth = getTotalRentalsForMonth();
 
@@ -343,7 +361,7 @@ const Expenses = () => {
           <div className="flex items-center gap-3">
             <Calendar className="text-lof-600" size={24} />
             <div>
-              <p className="text-sm text-slate-600 font-medium">Periodo seleccionado</p>
+              <p className="text-sm text-slate-600 font-medium">{strings.expenses.labels.periodSelected}</p>
               <p className="text-lg font-bold text-slate-900">{getMonthName(selectedMonth)}</p>
             </div>
           </div>
@@ -363,7 +381,7 @@ const Expenses = () => {
               }}
               className="px-4 py-2 text-sm font-medium text-lof-600 hover:bg-lof-50 rounded-lg transition-colors"
             >
-              Hoy
+              {strings.common.today}
             </button>
             <button
               onClick={() => changeMonth('next')}
@@ -528,7 +546,7 @@ const Expenses = () => {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">{strings.expenses.editShareTitle}</h3>
-                <p className="text-sm text-slate-500">{getUserDisplayName(editingMember)}</p>
+                <p className="text-sm text-slate-500">{editingMember ? getUserDisplayName(editingMember) : ''}</p>
               </div>
               <button onClick={() => setEditingMember(null)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
@@ -611,7 +629,7 @@ const Expenses = () => {
             <Receipt className="text-blue-600" size={20} />
           </div>
           <p className="text-3xl font-bold text-blue-900">${totalExpenses.toLocaleString('es-CL')}</p>
-          <p className="text-xs text-blue-600 mt-1">Mensuales recurrentes</p>
+          <p className="text-xs text-blue-600 mt-1">{strings.expenses.labels.recurring}</p>
         </div>
 
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200">
@@ -624,7 +642,7 @@ const Expenses = () => {
             const [year, month] = selectedMonth.split('-').map(Number);
             const startDate = new Date(b.startDate);
             return b.status === 'confirmed' && startDate.getFullYear() === year && startDate.getMonth() + 1 === month;
-          }).length} reservas confirmadas</p>
+          }).length} {strings.expenses.labels.confirmedReservations}</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200">
@@ -636,7 +654,7 @@ const Expenses = () => {
             ${(totalSharedPayments + totalRentalsThisMonth).toLocaleString('es-CL')}
           </p>
           <p className="text-xs text-green-600 mt-1">
-            Gastos + arriendos
+            {strings.expenses.labels.expensesAndRentals}
           </p>
         </div>
       </div>
@@ -649,48 +667,61 @@ const Expenses = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-bold text-xl text-slate-800 flex items-center gap-2">
                 <Receipt size={22} className="text-blue-600" />
-                Gastos Recurrentes
+                {strings.expenses.expenseListTitle}
               </h2>
               <div className="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full">
                 ${totalExpenses.toLocaleString('es-CL')}
               </div>
             </div>
 
-            {expenses.length === 0 ? (
+            {filteredExpenses.length === 0 ? (
               <div className="text-center py-16 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                 <Receipt className="mx-auto mb-3 opacity-50" size={40} />
-                <p className="font-medium">No hay gastos registrados</p>
-                <p className="text-sm mt-1">Agrega el primer gasto compartido</p>
+                <p className="font-medium">{strings.expenses.noExpenses}</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {expenses.map(expense => (
-                  <div key={expense.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100 group hover:border-blue-200 hover:shadow-md transition-all">
-                    <div className="flex items-center gap-4 flex-1">
+                {filteredExpenses.map(expense => (
+                  <div key={expense.id} className="p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100 group hover:border-blue-200 hover:shadow-md transition-all">
+                    <div className="flex items-start gap-4">
+                      {/* Icono */}
                       <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                         <DollarSign size={22} strokeWidth={2.5} />
                       </div>
+
+                      {/* Contenido principal */}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-slate-900 truncate">{expense.name}</h4>
-                        <span className="text-xs text-slate-500 uppercase font-semibold tracking-wide">
-                          {expense.frequency === 'monthly' ? '📅 Mensual' :
-                            expense.frequency === 'quarterly' ? '📅 Trimestral' :
-                              expense.frequency === 'yearly' ? '📅 Anual' : '⚡ Único'}
-                        </span>
+                        {/* Nombre y botón en la misma línea */}
+                        <div className="flex items-start justify-between gap-3 mb-1">
+                          <h4 className="font-bold text-slate-900 leading-tight break-words">
+                            {expense.name}
+                          </h4>
+
+                          {/* Botón eliminar - siempre visible en móvil, hover en desktop */}
+                          {isPropertyAdmin && (
+                            <button
+                              onClick={() => handleDeleteExpense(expense.id)}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex-shrink-0 md:opacity-0 md:group-hover:opacity-100"
+                              title="Eliminar gasto"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Frecuencia y monto */}
+                        <div className="flex items-center justify-between gap-4 mt-2">
+                          <span className="text-xs text-slate-500 uppercase font-semibold tracking-wide">
+                            {expense.frequency === 'monthly' ? '📅 Mensual' :
+                              expense.frequency === 'quarterly' ? '📅 Trimestral' :
+                                expense.frequency === 'yearly' ? '📅 Anual' : '⚡ Único'}
+                          </span>
+
+                          <span className="font-bold text-xl text-slate-900 whitespace-nowrap">
+                            ${expense.amount.toLocaleString('es-CL')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="font-bold text-xl text-slate-900">
-                        ${expense.amount.toLocaleString('es-CL')}
-                      </span>
-                      {isPropertyAdmin && (
-                        <button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -702,16 +733,15 @@ const Expenses = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h2 className="font-bold text-xl text-slate-800 mb-6 flex items-center gap-2">
               <Tag size={22} className="text-purple-600" />
-              Resumen por Grupo
+              {strings.expenses.tagSummaryTitle}
             </h2>
 
             <div className="space-y-3">
               {tags.length === 0 ? (
-                <p className="text-center text-slate-400 py-8 text-sm">No hay grupos configurados</p>
+                <p className="text-center text-slate-400 py-8 text-sm">{strings.expenses.noTags}</p>
               ) : (
                 tags.map(tag => {
-                  const totalExpensesAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-                  const tagVariableTotal = (totalExpensesAmount * tag.sharePercentage) / 100;
+                  const tagVariableTotal = (totalExpenses * tag.sharePercentage) / 100;
 
                   const membersInTag = allowedEmails.filter(email => {
                     const share = shares.find(s => s.memberEmail === email);
@@ -757,7 +787,7 @@ const Expenses = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-bold text-xl text-slate-800 flex items-center gap-2">
                 <Users size={22} className="text-lof-600" />
-                Pagos de {getMonthName(selectedMonth)}
+                {strings.expenses.labels.monthlyPayments} {getMonthName(selectedMonth)}
               </h2>
               <div className="text-sm font-bold text-lof-600 bg-lof-50 px-4 py-2 rounded-full">
                 Total: ${(totalSharedPayments + totalRentalsThisMonth).toLocaleString('es-CL')}
@@ -768,7 +798,7 @@ const Expenses = () => {
               {allowedEmails.length === 0 ? (
                 <div className="text-center py-16 text-slate-400">
                   <Users className="mx-auto mb-3 opacity-50" size={40} />
-                  <p className="font-medium">No hay miembros registrados</p>
+                  <p className="font-medium">{strings.expenses.noMembers}</p>
                 </div>
               ) : (
                 allowedEmails.map(email => {
@@ -823,7 +853,7 @@ const Expenses = () => {
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-slate-600 flex items-center gap-2">
                               <Receipt size={14} className="text-blue-500" />
-                              Gastos Comunes
+                              {strings.expenses.title}
                             </span>
                             <span className="font-semibold text-slate-900">${sharedAmount.toLocaleString('es-CL')}</span>
                           </div>
@@ -834,7 +864,7 @@ const Expenses = () => {
                             <div className="flex justify-between items-center">
                               <span className="text-sm text-slate-600 flex items-center gap-2">
                                 <Home size={14} className="text-green-500" />
-                                Arriendos ({userBookings.length})
+                                {strings.nav.bookings} ({userBookings.length})
                               </span>
                               <span className="font-semibold text-slate-900">${rentalAmount.toLocaleString('es-CL')}</span>
                             </div>
@@ -855,7 +885,7 @@ const Expenses = () => {
 
                         {/* Total */}
                         <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200">
-                          <span className="text-sm font-bold text-slate-700">TOTAL {getMonthName(selectedMonth).split(' ')[0].toUpperCase()}</span>
+                          <span className="text-sm font-bold text-slate-700">{strings.expenses.labels.totalFor} {getMonthName(selectedMonth).split(' ')[0].toUpperCase()}</span>
                           <span className="font-bold text-2xl text-lof-600">
                             ${totalToPay.toLocaleString('es-CL')}
                           </span>
