@@ -110,7 +110,18 @@ export const strings = {
     toastApprovedDesc: "It now appears as confirmed.",
     toastRejected: "Request rejected",
     toastRejectedDesc: "The date has been released.",
-    toastError: "Error updating status"
+    toastError: "Error updating status",
+    details: {
+      title: "Booking Details",
+      guests: "Guests",
+      adults: "Adults",
+      children: "Children",
+      period: "Period",
+      total: "Estimated Total Cost",
+      services: "Included Services",
+      status: "Booking Status",
+      requestedBy: "Requested by"
+    }
   },
   auth: {
     loginTitle: "Enter Lof App",

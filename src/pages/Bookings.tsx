@@ -27,6 +27,7 @@ import {
   type Booking
 } from '../services/bookingService';
 import { checkPropertyAdmin } from '../services/propertyService';
+import BookingDetailModal from '../components/BookingDetailModal';
 
 const Bookings = () => {
   const { user } = useAuth();
@@ -43,6 +44,7 @@ const Bookings = () => {
   const [loadingList, setLoadingList] = useState(false);
   const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
   const [isPropertyAdmin, setIsPropertyAdmin] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const { settings, loading: loadingSettings } = useSettings();
 
@@ -240,7 +242,8 @@ const Bookings = () => {
                   return (
                     <div
                       key={booking.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors ${cardStyles}`}
+                      onClick={() => setSelectedBooking(booking)}
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-sm ${cardStyles}`}
                     >
 
                       {/* Información de la Reserva */}
@@ -470,6 +473,13 @@ const Bookings = () => {
           </div>
         </div>
       </div>
+
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+        />
+      )}
     </div>
   );
 };

@@ -8,7 +8,8 @@ import { getBookings, type Booking } from '../services/bookingService';
 import { getAllUsers, type UserData } from '../services/userService';
 import Avatar from '../components/ui/Avatar';
 import { getPropertyById } from '../services/propertyService';
-import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import BookingDetailModal from '../components/BookingDetailModal';
 import { toast } from 'sonner';
 
 const Expenses = () => {
@@ -40,6 +41,8 @@ const Expenses = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const [calculatedPayments, setCalculatedPayments] = useState<Record<string, number>>({});
 
@@ -872,12 +875,17 @@ const Expenses = () => {
                             {/* Detalles de arriendos */}
                             <div className="ml-6 space-y-1 mt-2">
                               {userBookings.map((booking, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-xs text-slate-500">
-                                  <span>
+                                <button
+                                  key={idx}
+                                  onClick={() => setSelectedBooking(booking)}
+                                  className="w-full flex justify-between items-center text-xs text-slate-500 hover:text-lof-600 hover:bg-lof-50 p-1 rounded transition-colors group/item"
+                                >
+                                  <span className="flex items-center gap-1">
                                     {new Date(booking.startDate).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })} - {new Date(booking.endDate).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                                    <Info size={10} className="opacity-0 group-hover/item:opacity-100" />
                                   </span>
-                                  <span>${booking.totalCost?.toLocaleString('es-CL')}</span>
-                                </div>
+                                  <span className="font-medium">${booking.totalCost?.toLocaleString('es-CL')}</span>
+                                </button>
                               ))}
                             </div>
                           </>
@@ -899,6 +907,13 @@ const Expenses = () => {
           </div>
         </div>
       </div>
+
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+        />
+      )}
     </div>
   );
 };

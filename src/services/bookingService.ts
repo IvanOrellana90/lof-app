@@ -17,11 +17,14 @@ export interface Booking {
   propertyId: string;
   userId: string;
   userName: string;
+  userEmail?: string;
   startDate: Date;
   endDate: Date;
   status: 'pending' | 'confirmed' | 'rejected';
   totalCost: number;
-  selectedOptionalFees?: string[]; // IDs de costos opcionales seleccionados
+  adults: number;
+  children: number;
+  selectedOptionalFees: string[];
 }
 
 // 1. Crear Reserva (AHORA RECIBE propertyId)
@@ -74,27 +77,37 @@ export const getBookings = async (propertyId: string): Promise<Booking[]> => {
 
     // B. Pedimos usuarios (Esto se mantiene igual para resolver nombres)
     const usersSnap = await getDocs(collection(db, "users"));
-    const usersMap: Record<string, string> = {};
+    const usersMap: Record<string, { name: string, email: string }> = {};
     usersSnap.forEach(doc => {
       const userData = doc.data();
-      usersMap[doc.id] = userData.displayName || "Usuario";
+      usersMap[doc.id] = {
+        name: userData.displayName || "Usuario",
+        email: userData.email || ""
+      };
     });
 
     return bookingsSnap.docs.map(doc => {
       const data = doc.data();
       const startDate = data.startDate?.toDate ? data.startDate.toDate() : new Date();
       const endDate = data.endDate?.toDate ? data.endDate.toDate() : new Date();
-      const currentDisplayName = usersMap[data.userId] || data.userName || 'Usuario desconocido';
+
+      const userData = usersMap[data.userId];
+      const currentDisplayName = userData?.name || data.userName || 'Usuario desconocido';
+      const currentUserEmail = userData?.email || '';
 
       return {
         id: doc.id,
         propertyId: data.propertyId,
         userId: data.userId,
         userName: currentDisplayName,
+        userEmail: currentUserEmail,
         status: data.status || 'confirmed',
         startDate: startDate,
         endDate: endDate,
-        totalCost: data.totalCost || 0
+        totalCost: data.totalCost || 0,
+        adults: data.adults || 1,
+        children: data.children || 0,
+        selectedOptionalFees: data.selectedOptionalFees || []
       } as Booking;
     });
   } catch (error) {

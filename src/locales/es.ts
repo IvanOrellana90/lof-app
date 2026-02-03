@@ -110,7 +110,18 @@ export const strings = {
     toastApprovedDesc: "Ahora aparece como confirmada.",
     toastRejected: "Solicitud rechazada",
     toastRejectedDesc: "La fecha ha quedado liberada.",
-    toastError: "Error al actualizar estado"
+    toastError: "Error al actualizar estado",
+    details: {
+      title: "Detalles de la Reserva",
+      guests: "Huéspedes",
+      adults: "Adultos",
+      children: "Niños",
+      period: "Periodo",
+      total: "Costo Total Estimado",
+      services: "Servicios Incluidos",
+      status: "Estado de la reserva",
+      requestedBy: "Solicitado por"
+    }
   },
   auth: {
     loginTitle: "Ingresar al Lof App",
