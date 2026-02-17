@@ -1,4 +1,5 @@
-import { X, Users, Baby, Calendar, Receipt, Info, Tag } from 'lucide-react';
+import { X, Users, Baby, Calendar, Receipt, Info, Tag, Pencil } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Booking } from '../services/bookingService';
@@ -8,12 +9,15 @@ import { useSettings } from '../context/SettingsContext';
 interface BookingDetailModalProps {
   booking: Booking;
   onClose: () => void;
+  onEdit?: (booking: Booking) => void;
 }
 
-const BookingDetailModal = ({ booking, onClose }: BookingDetailModalProps) => {
+const BookingDetailModal = ({ booking, onClose, onEdit }: BookingDetailModalProps) => {
+  const { user } = useAuth();
   const { strings, language } = useLanguage();
   const { settings } = useSettings();
 
+  const isOwner = user?.uid === booking.userId;
   const locale = language === 'es' ? es : undefined;
   const d = strings.bookings.details;
 
@@ -49,7 +53,7 @@ const BookingDetailModal = ({ booking, onClose }: BookingDetailModalProps) => {
           </button>
         </div>
 
-        <div className="p-8 space-y-8 max-h-[80vh] overflow-y-auto">
+        <div className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
           {/* Usuario y Estado */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -138,7 +142,7 @@ const BookingDetailModal = ({ booking, onClose }: BookingDetailModalProps) => {
           </div>
 
           {/* Total */}
-          <div className="pt-6 border-t-2 border-slate-100">
+          <div className="pt-4 border-t-2 border-slate-100">
             <div className="bg-lof-50 p-6 rounded-2xl border border-lof-100 flex justify-between items-center">
               <div>
                 <p className="text-xs text-lof-600 uppercase font-black tracking-widest mb-1">{d.total}</p>
@@ -151,6 +155,22 @@ const BookingDetailModal = ({ booking, onClose }: BookingDetailModalProps) => {
               </div>
             </div>
           </div>
+
+          {/* Acciones para el dueño */}
+          {isOwner && onEdit && (
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  onEdit(booking);
+                  onClose();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
+              >
+                <Pencil size={18} />
+                {strings.common?.edit || 'Editar Reserva'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

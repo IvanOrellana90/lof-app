@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Home, Calendar, Wallet, Menu, X, LogOut, User as UserIcon, LayoutDashboard, Bell, CheckCheck } from 'lucide-react';
+import { Home, Calendar, Wallet, Menu, X, LogOut, User as UserIcon, LayoutDashboard, Bell, CheckCheck, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -48,31 +48,39 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center flex-shrink-0">
             <img
               src={logo}
               alt="Lof App"
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
 
           {/* Menú Escritorio (Centro) */}
-          <div className="hidden md:flex items-center space-x-2">
-            <Link to="/" className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${location.pathname === '/' ? 'text-lof-600 bg-lof-50 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}>
-              <Home size={18} /> Mis Propiedades
-            </Link>
+          <div className="hidden md:flex items-center space-x-1">
+            {!isInsideProperty && (
+              <Link to="/" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${location.pathname === '/' ? 'text-lof-600 bg-lof-50 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Home size={16} /> Mis Propiedades
+              </Link>
+            )}
 
             {isInsideProperty && (
               <>
-                <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                <Link to={`/property/${propertyId}`} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive(`/property/${propertyId}`)}`}>
-                  <LayoutDashboard size={18} /> {strings.nav.dashboard || "Panel"}
+                <Link to="/" className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all" title="Mis Propiedades">
+                  <Home size={16} />
                 </Link>
-                <Link to={`/property/${propertyId}/bookings`} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive(`/property/${propertyId}/bookings`)}`}>
-                  <Calendar size={18} /> {strings.nav.bookings}
+                <div className="h-5 w-px bg-slate-200 mx-1"></div>
+                <Link to={`/property/${propertyId}`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${isActive(`/property/${propertyId}`)}`}>
+                  <LayoutDashboard size={16} /> {strings.nav.dashboard || "Panel"}
                 </Link>
-                <Link to={`/property/${propertyId}/expenses`} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive(`/property/${propertyId}/expenses`)}`}>
-                  <Wallet size={18} /> {strings.nav.expenses}
+                <Link to={`/property/${propertyId}/bookings`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${isActive(`/property/${propertyId}/bookings`)}`}>
+                  <Calendar size={16} /> {strings.nav.bookings}
+                </Link>
+                <Link to={`/property/${propertyId}/expenses`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${isActive(`/property/${propertyId}/expenses`)}`}>
+                  <Wallet size={16} /> {strings.nav.expenses}
+                </Link>
+                <Link to={`/property/${propertyId}/community`} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${isActive(`/property/${propertyId}/community`)}`}>
+                  <MessageSquare size={16} /> {strings.nav.community}
                 </Link>
               </>
             )}
@@ -196,6 +204,9 @@ const Navbar = () => {
               </Link>
               <Link to={`/property/${propertyId}/expenses`} onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${isActive(`/property/${propertyId}/expenses`)}`}>
                 <Wallet size={18} /> {strings.nav.expenses}
+              </Link>
+              <Link to={`/property/${propertyId}/community`} onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${isActive(`/property/${propertyId}/community`)}`}>
+                <MessageSquare size={18} /> {strings.nav.community}
               </Link>
             </>
           )}

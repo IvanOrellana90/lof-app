@@ -38,6 +38,7 @@ export const strings = {
     home: "Home",
     bookings: "Bookings",
     expenses: "Expenses & Payments",
+    community: "Community",
     profile: "My Profile",
     logout: "Log Out",
     settings: "Settings"
@@ -254,5 +255,25 @@ export const strings = {
   footer: {
     rights: "All rights reserved",
     madeWithLove: "Made with love by the Lof team"
+  },
+  community: {
+    title: "Lof Community",
+    subtitle: "Space to share topics, doubts, and comments about our home.",
+    newTopic: "New Topic",
+    topicTitlePlaceholder: "Topic title (e.g., Quincho rules)",
+    topicContentPlaceholder: "What do you want to share with the community?",
+    btnPost: "Post",
+    noTopics: "There are no conversation topics yet. Be the first!",
+    comments: "Comments",
+    writeComment: "Write a comment...",
+    btnComment: "Comment",
+    backToTopics: "Back to topics",
+    postedBy: "Posted by",
+    justNow: "Just now",
+    searchPlaceholder: "Search topics...",
+    pinned: "Pinned",
+    pin: "Pin",
+    unpin: "Unpin",
+    pinnedTopics: "Pinned Topics",
   }
 };

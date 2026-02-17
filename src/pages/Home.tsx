@@ -9,6 +9,7 @@ import { getPropertyById, checkPropertyAdmin } from '../services/propertyService
 import BankCard from '../features/dashboard/BankCard';
 import PricingRules from '../features/dashboard/PricingRules';
 import HouseStatus from '../features/dashboard/HouseStatus';
+import PinnedTopics from '../features/dashboard/PinnedTopics';
 
 const Home = () => {
   const { propertyId } = useParams();
@@ -87,6 +88,9 @@ const Home = () => {
         <div className="space-y-6">
           {/* Status Card */}
           <HouseStatus />
+
+          {/* Temas Destacados */}
+          <PinnedTopics />
 
           <BankCard />
         </div>

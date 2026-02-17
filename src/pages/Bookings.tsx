@@ -27,6 +27,7 @@ import {
   getBookings,
   updateBookingStatus,
   deleteBooking,
+  updateBooking,
   type Booking
 } from '../services/bookingService';
 import { checkPropertyAdmin } from '../services/propertyService';
@@ -49,7 +50,8 @@ const Bookings = () => {
   const [isPropertyAdmin, setIsPropertyAdmin] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  // Nuevo: Estado para modal de confirmación de eliminación
+  // Nuevo: Estados para edición
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
 
   const { settings, loading: loadingSettings } = useSettings();
@@ -83,8 +85,9 @@ const Bookings = () => {
   const disabledDays = [
     { before: new Date() },
     // CAMBIO IMPORTANTE: Filtramos para que las rechazadas NO bloqueen el calendario
+    // Y también filtramos la que estamos editando para que no bloquee sus propios días
     ...existingBookings
-      .filter(b => b.status !== 'rejected')
+      .filter(b => b.status !== 'rejected' && b.id !== editingBooking?.id)
       .map(b => ({ from: b.startDate, to: b.endDate }))
   ];
 
@@ -125,35 +128,48 @@ const Bookings = () => {
     });
   };
 
-  // --- ACCIÓN 1: SOLICITAR RESERVA ---
+  // --- ACCIÓN 1: SOLICITAR / ACTUALIZAR RESERVA ---
   const handleReservation = async () => {
-    if (!range?.from || !range?.to || !propertyId) return; // Validar ID
+    if (!range?.from || !range?.to || !propertyId) return;
 
     setIsSubmitting(true);
     const toastId = toast.loading(strings.bookings.processing);
 
-    const result = await createBooking(
-      propertyId,
-      range,
-      counts.adults,
-      counts.children,
-      totalCost,
-      { uid: user!.uid, name: user!.displayName || 'Usuario' },
-      selectedOptionalIds
-    );
+    let result;
+    if (editingBooking) {
+      result = await updateBooking(
+        editingBooking.id,
+        range,
+        counts.adults,
+        counts.children,
+        totalCost,
+        selectedOptionalIds
+      );
+    } else {
+      result = await createBooking(
+        propertyId,
+        range,
+        counts.adults,
+        counts.children,
+        totalCost,
+        { uid: user!.uid, name: user!.displayName || 'Usuario' },
+        selectedOptionalIds
+      );
+    }
 
     toast.dismiss(toastId);
 
     if (result.success) {
-      toast.success(strings.bookings.successTitle, {
-        description: strings.bookings.successMsg,
+      toast.success(editingBooking ? "Reserva actualizada" : strings.bookings.successTitle, {
+        description: editingBooking ? "Tu solicitud de cambio está pendiente de aprobación." : strings.bookings.successMsg,
         duration: 5000,
       });
 
-      // Limpiamos formulario y recargamos la lista para ver la solicitud
+      // Limpiamos formulario y recargamos la lista
       setRange(undefined);
       setCounts({ adults: 1, children: 0 });
       setSelectedOptionalIds([]);
+      setEditingBooking(null);
       loadData();
     } else {
       toast.error("Error", {
@@ -161,6 +177,15 @@ const Bookings = () => {
       });
     }
     setIsSubmitting(false);
+  };
+
+  const handleEditInit = (booking: Booking) => {
+    setEditingBooking(booking);
+    setRange({ from: booking.startDate, to: booking.endDate });
+    setCounts({ adults: booking.adults, children: booking.children });
+    setSelectedOptionalIds(booking.selectedOptionalFees || []);
+    // Scroll al formulario
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // --- ACCIÓN 2: ADMINISTRAR (APROBAR/RECHAZAR) ---
@@ -350,9 +375,16 @@ const Bookings = () => {
 
         {/* === COLUMNA DERECHA: FORMULARIO === */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <CalendarIcon size={20} className="text-lof-600" />
-            {strings.bookings.summaryTitle}
+          <h3 className="font-bold text-slate-800 mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarIcon size={20} className="text-lof-600" />
+              {editingBooking ? 'Editar Reserva' : strings.bookings.summaryTitle}
+            </div>
+            {editingBooking && (
+              <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase font-bold tracking-widest animate-pulse">
+                Modo Edición
+              </span>
+            )}
           </h3>
 
           <div className="space-y-6">
@@ -503,11 +535,25 @@ const Bookings = () => {
                     {strings.bookings.processing}
                   </>
                 ) : (
-                  strings.bookings.btnReserve
+                  editingBooking ? 'Actualizar Reserva' : strings.bookings.btnReserve
                 )}
               </button>
 
-              {range?.to && !isSubmitting && (
+              {editingBooking && !isSubmitting && (
+                <button
+                  onClick={() => {
+                    setEditingBooking(null);
+                    setRange(undefined);
+                    setCounts({ adults: 1, children: 0 });
+                    setSelectedOptionalIds([]);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700 text-sm py-2 transition-colors font-medium"
+                >
+                  <X size={14} /> Cancelar edición
+                </button>
+              )}
+
+              {range?.to && !isSubmitting && !editingBooking && (
                 <button
                   onClick={() => setRange(undefined)}
                   className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-red-500 text-xs py-2 transition-colors"
@@ -525,6 +571,7 @@ const Bookings = () => {
         <BookingDetailModal
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
+          onEdit={handleEditInit}
         />
       )}
 

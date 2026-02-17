@@ -175,3 +175,33 @@ export const updateBookingStatus = async (bookingId: string, newStatus: 'confirm
     return { success: false, error };
   }
 };
+
+export const updateBooking = async (
+  bookingId: string,
+  range: DateRange,
+  adults: number,
+  children: number,
+  totalCost: number,
+  selectedOptionalFees: string[] = []
+) => {
+  try {
+    if (!range.from || !range.to) throw new Error("Fechas incompletas");
+
+    const bookingRef = doc(db, "bookings", bookingId);
+    await updateDoc(bookingRef, {
+      startDate: Timestamp.fromDate(range.from),
+      endDate: Timestamp.fromDate(range.to),
+      adults,
+      children,
+      totalCost,
+      selectedOptionalFees,
+      status: 'pending', // Siempre vuelve a pendiente tras editar
+      updatedAt: Timestamp.now()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error al actualizar reserva:", error);
+    return { success: false, error };
+  }
+};
