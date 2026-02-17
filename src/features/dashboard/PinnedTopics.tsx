@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Pin, MessageSquare, ChevronRight } from 'lucide-react';
+import { Pin, MessageSquare } from 'lucide-react';
 import { getPinnedTopics, type CommunityTopic } from '../../services/communityService';
 import { useLanguage } from '../../context/LanguageContext';
 
