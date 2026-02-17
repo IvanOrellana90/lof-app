@@ -47,9 +47,9 @@ const BookingDetailModal = ({ booking, onClose, onEdit }: BookingDetailModalProp
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            className="p-2 hover:bg-blue-500/20 rounded-full transition-colors"
           >
-            <X size={24} />
+            <X size={24} color='#0284c7' />
           </button>
         </div>
 
