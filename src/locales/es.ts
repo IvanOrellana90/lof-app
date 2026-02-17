@@ -31,7 +31,20 @@ export const strings = {
     roleAdmin: "Admin",
     roleMember: "Miembro",
     toastCreated: "¡Propiedad creada!",
-    toastError: "Error al crear propiedad"
+    toastError: "Error al crear propiedad",
+    myBookings: {
+      title: "Mis Reservas",
+      noBookings: "No tienes reservas registradas.",
+      editBooking: "Editar Reserva",
+    },
+    myExpenses: {
+      title: "Mis Gastos del Mes",
+      noExpenses: "No tienes gastos registrados para este mes.",
+      viewDetails: "Ver Detalles",
+      currentMonth: "Total Mes",
+      sharedLabel: "Gastos Comunes",
+      bookingLabel: "Reservas",
+    },
   },
   nav: {
     dashboard: "Panel",

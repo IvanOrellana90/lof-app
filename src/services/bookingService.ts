@@ -150,6 +150,50 @@ export const getBookings = async (propertyId: string): Promise<Booking[]> => {
   }
 };
 
+// 2b. Obtener Reservas (FILTRADAS POR USUARIO)
+export const getUserBookings = async (userId: string): Promise<Booking[]> => {
+  try {
+    const q = query(
+      collection(db, "bookings"),
+      where("userId", "==", userId),
+      orderBy("startDate", "asc")
+    );
+
+    const bookingsSnap = await getDocs(q);
+
+    // Necesitamos los nombres de las propiedades para mostrarlas en el dashboard
+    const propertiesSnap = await getDocs(collection(db, "properties"));
+    const propertiesMap: Record<string, string> = {};
+    propertiesSnap.forEach(doc => {
+      propertiesMap[doc.id] = doc.data().name || "Propiedad";
+    });
+
+    return bookingsSnap.docs.map(doc => {
+      const data = doc.data();
+      const startDate = data.startDate?.toDate ? data.startDate.toDate() : new Date();
+      const endDate = data.endDate?.toDate ? data.endDate.toDate() : new Date();
+
+      return {
+        id: doc.id,
+        propertyId: data.propertyId,
+        propertyName: propertiesMap[data.propertyId] || "Propiedad desconocida", // Extendemos la interfaz temporalmente o usamos un campo extra
+        userId: data.userId,
+        userName: data.userName,
+        status: data.status || 'confirmed',
+        startDate: startDate,
+        endDate: endDate,
+        totalCost: data.totalCost || 0,
+        adults: data.adults || 1,
+        children: data.children || 0,
+        selectedOptionalFees: data.selectedOptionalFees || []
+      } as Booking & { propertyName?: string };
+    });
+  } catch (error) {
+    console.error("Error al obtener reservas del usuario:", error);
+    return [];
+  }
+};
+
 // 3. Update (Este se mantiene IGUAL porque el ID de reserva es único globalmente)
 export const updateBookingStatus = async (bookingId: string, newStatus: 'confirmed' | 'rejected') => {
   try {

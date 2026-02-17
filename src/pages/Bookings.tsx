@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import { format, differenceInDays } from 'date-fns';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -36,6 +36,7 @@ import BookingDetailModal from '../components/BookingDetailModal';
 const Bookings = () => {
   const { user } = useAuth();
   const { propertyId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { strings } = useLanguage();
 
   // --- ESTADOS ---
@@ -79,6 +80,19 @@ const Bookings = () => {
   useEffect(() => {
     loadData();
   }, [propertyId]);
+
+  // Nuevo: Efecto para manejar edición desde URL
+  useEffect(() => {
+    const editBookingId = searchParams.get('edit');
+    if (editBookingId && existingBookings.length > 0) {
+      const bookingToEdit = existingBookings.find(b => b.id === editBookingId);
+      if (bookingToEdit) {
+        handleEditInit(bookingToEdit);
+        // Limpiamos el query param para que no moleste luego, pero sin navegar fuera
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [existingBookings, searchParams]);
 
   // --- LÓGICA DEL CALENDARIO (BLOQUEOS) ---
   // Bloqueamos días pasados Y cualquier reserva (ya sea pendiente o confirmada)

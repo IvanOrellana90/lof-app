@@ -2,6 +2,7 @@ import { collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, T
 import { db } from './firebase';
 import { notificationService } from './notificationService';
 import { getPropertyById } from './propertyService';
+import { getUserBookings } from './bookingService';
 import { getDocs as getDocsFirestore, query as queryFirestore, collection as collectionFirestore, where as whereFirestore } from 'firebase/firestore';
 
 // Gasto compartido individual
@@ -272,4 +273,149 @@ export const calculateMemberPayments = (
   });
 
   return payments;
+};
+
+// --- GLOBAL (DASHBOARD) ---
+
+export interface UserGlobalExpense {
+  propertyId: string;
+  propertyName: string;
+  amount: number;
+  tagName: string;
+  sharePercentage: number;
+  fixedFee: number;
+  isCustom: boolean;
+  sharedAmount: number;
+  bookingAmount: number;
+}
+
+export const getUserGlobalExpenses = async (userId: string, email: string): Promise<UserGlobalExpense[]> => {
+  try {
+    const emailLower = email.toLowerCase();
+
+    // 1. Buscamos participaciones y reservas del usuario en paralelo
+    const [sharesSnap, userBookings] = await Promise.all([
+      getDocs(query(collection(db, "memberShares"), where("memberEmail", "==", emailLower))),
+      getUserBookings(userId)
+    ]);
+
+    const userShares = sharesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as MemberShare));
+
+    if (userShares.length === 0 && userBookings.length === 0) return [];
+
+    // 2. Agrupamos todas las propiedades involucradas
+    const propertyIds = Array.from(new Set([
+      ...userShares.map(s => s.propertyId),
+      ...userBookings.map(b => b.propertyId)
+    ]));
+
+    // 3. Obtenemos datos de cada propiedad en paralelo
+    const globalExpenses: UserGlobalExpense[] = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    for (const propertyId of propertyIds) {
+      try {
+        const [prop, allExpenses, allTags] = await Promise.all([
+          getPropertyById(propertyId),
+          getSharedExpenses(propertyId),
+          getMemberTags(propertyId)
+        ]);
+
+        if (!prop) continue;
+
+        // A. CÁLCULO DE GASTOS COMPARTIDOS
+        const currentMonthExpenses = allExpenses.filter(exp => {
+          if (!exp.createdAt) return false;
+          const createdDate = new Date(exp.createdAt);
+          const createdYear = createdDate.getFullYear();
+          const createdMonth = createdDate.getMonth() + 1;
+
+          if (exp.frequency === 'one-time') {
+            return createdYear === currentYear && createdMonth === currentMonth;
+          }
+          return createdYear < currentYear || (createdYear === currentYear && createdMonth <= currentMonth);
+        });
+
+        const totalExpenses = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const userPropertyShares = userShares.filter(s => s.propertyId === propertyId);
+
+        let sharedAmount = 0;
+        let tagName = "General";
+        let sharePct = 0;
+        let fixed = 0;
+        let isCustom = false;
+
+        for (const share of userPropertyShares) {
+          if (share.customAmount !== undefined && share.customAmount !== null) {
+            sharedAmount += share.customAmount;
+            isCustom = true;
+          } else if (share.tagId) {
+            const tag = allTags.find(t => t.id === share.tagId);
+            if (tag) {
+              tagName = tag.name;
+              sharePct = tag.sharePercentage;
+              fixed = tag.fixedFee || 0;
+
+              const qTagMembers = query(
+                collection(db, "memberShares"),
+                where("propertyId", "==", propertyId),
+                where("tagId", "==", share.tagId)
+              );
+              const tagMembersSnap = await getDocs(qTagMembers);
+              const count = tagMembersSnap.docs.filter(d => prop.allowedEmails.includes(d.data().memberEmail)).length || 1;
+
+              const variablePart = ((totalExpenses * tag.sharePercentage) / 100) / count;
+              sharedAmount += (variablePart + fixed);
+            }
+          } else if (share.sharePercentage !== undefined) {
+            sharePct = share.sharePercentage;
+            sharedAmount += (totalExpenses * share.sharePercentage) / 100;
+          }
+        }
+
+        // B. CÁLCULO DE RESERVAS CONFIRMADAS
+        const monthBookings = userBookings.filter(b => {
+          if (b.propertyId !== propertyId || b.status !== 'confirmed') return false;
+
+          const startDate = new Date(b.startDate);
+          const endDate = new Date(b.endDate);
+
+          // Verificar si la reserva cae en el mes seleccionado (hoy)
+          const isThisMonth = (
+            (startDate.getFullYear() === currentYear && startDate.getMonth() + 1 === currentMonth) ||
+            (endDate.getFullYear() === currentYear && endDate.getMonth() + 1 === currentMonth) ||
+            (startDate < new Date(currentYear, currentMonth - 1, 1) && endDate > new Date(currentYear, currentMonth, 0))
+          );
+
+          return isThisMonth;
+        });
+
+        const bookingAmount = monthBookings.reduce((sum, b) => sum + (b.totalCost || 0), 0);
+
+        // Solo agregar si hay algún gasto (compartido o reserva)
+        if (sharedAmount > 0 || bookingAmount > 0) {
+          globalExpenses.push({
+            propertyId,
+            propertyName: prop.name,
+            amount: Math.round(sharedAmount + bookingAmount),
+            tagName,
+            sharePercentage: sharePct,
+            fixedFee: fixed,
+            isCustom,
+            sharedAmount: Math.round(sharedAmount),
+            bookingAmount: Math.round(bookingAmount)
+          });
+        }
+      } catch (err) {
+        console.error(`Error calculating global expenses for property ${propertyId}:`, err);
+      }
+    }
+
+    return globalExpenses;
+  } catch (error) {
+    console.error("Error getting user global expenses:", error);
+    return [];
+  }
 };
