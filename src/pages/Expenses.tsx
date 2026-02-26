@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { usePropertyAdmin } from '../hooks/usePropertyAdmin';
 
 import { useLanguage } from '../context/LanguageContext';
@@ -8,7 +9,7 @@ import { getBookings, type Booking } from '../services/bookingService';
 import { getAllUsers, type UserData } from '../services/userService';
 import Avatar from '../components/ui/Avatar';
 import { getPropertyById } from '../services/propertyService';
-import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight, Info, Download } from 'lucide-react';
 import BookingDetailModal from '../components/BookingDetailModal';
 import { toast } from 'sonner';
 
@@ -345,6 +346,45 @@ const Expenses = () => {
     }
   };
 
+  const handleExport = () => {
+    if (!allowedEmails.length) return;
+
+    // 1. Resumen por Miembro
+    const memberData = allowedEmails.map(email => {
+      const sharedAmount = calculatedPayments[email] || 0;
+      const rentalAmount = getRentalAmountForMonth(email);
+      const share = shares.find(s => s.memberEmail === email);
+      const tagName = share?.tagId ? tags.find(t => t.id === share.tagId)?.name : strings.common?.none || 'Ninguno';
+
+      return {
+        [strings.common?.name || 'Nombre']: getUserDisplayName(email),
+        'Email': email,
+        'Tag/Categoría': tagName,
+        [strings.expenses.title]: sharedAmount,
+        [strings.nav.bookings]: rentalAmount,
+        [strings.common?.total || 'Total']: sharedAmount + rentalAmount
+      };
+    });
+
+    // 2. Detalle de Gastos Comunes
+    const expensesData = filteredExpenses.map(exp => ({
+      [strings.common?.name || 'Nombre']: exp.name,
+      [strings.common?.amount || 'Monto']: exp.amount,
+      [strings.common?.frequency || 'Frecuencia']: exp.frequency
+    }));
+
+    const workbook = XLSX.utils.book_new();
+
+    const memberSheet = XLSX.utils.json_to_sheet(memberData);
+    XLSX.utils.book_append_sheet(workbook, memberSheet, "Resumen Miembros");
+
+    const expensesSheet = XLSX.utils.json_to_sheet(expensesData);
+    XLSX.utils.book_append_sheet(workbook, expensesSheet, "Gastos Comunes");
+
+    const fileName = `Resumen_Gastos_${propertyId}_${selectedMonth}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   if (loading || adminLoading) {
     return <div className="p-8 text-center text-slate-500">Cargando gastos...</div>;
   }
@@ -425,6 +465,15 @@ const Expenses = () => {
               title="Mes siguiente"
             >
               <ChevronRight size={20} className="text-slate-600" />
+            </button>
+            <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors border border-green-200"
+              title={strings.bookings.btnExport}
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">{strings.bookings.btnExport}</span>
             </button>
           </div>
         </div>

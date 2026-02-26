@@ -278,15 +278,29 @@ const Bookings = () => {
   const handleExport = () => {
     if (!existingBookings.length) return;
 
-    const data = existingBookings.map(b => ({
-      [strings.bookings.details.requestedBy]: b.userName,
-      [strings.bookings.checkIn]: format(b.startDate, 'dd/MM/yyyy'),
-      [strings.bookings.checkOut]: format(b.endDate, 'dd/MM/yyyy'),
-      [strings.bookings.details.status]: b.status,
-      [strings.bookings.details.total]: b.totalCost,
-      [strings.bookings.details.adults]: b.adults,
-      [strings.bookings.details.children]: b.children
-    }));
+    const data = existingBookings.map(b => {
+      // Obtener nombres de servicios seleccionados y obligatorios
+      const mandatoryServices = (settings.fixedCosts || [])
+        .filter(c => !c.isOptional)
+        .map(c => c.name);
+
+      const selectedOptionalServices = (settings.fixedCosts || [])
+        .filter(c => b.selectedOptionalFees?.includes(c.id))
+        .map(c => c.name);
+
+      const allServices = [...mandatoryServices, ...selectedOptionalServices].join(', ');
+
+      return {
+        [strings.bookings.details.requestedBy]: b.userName,
+        [strings.bookings.checkIn]: format(b.startDate, 'dd/MM/yyyy'),
+        [strings.bookings.checkOut]: format(b.endDate, 'dd/MM/yyyy'),
+        [strings.bookings.details.status]: b.status,
+        [strings.bookings.details.total]: b.totalCost,
+        [strings.bookings.details.adults]: b.adults,
+        [strings.bookings.details.children]: b.children,
+        [strings.bookings.details.services]: allServices || strings.common?.none || 'Ninguno'
+      };
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -328,8 +342,8 @@ const Bookings = () => {
           {/* 2. Lista de Reservas / Solicitudes */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800">{strings.bookings.calendarStatus}</h3>
               <div className="flex items-center gap-3">
-                <h3 className="font-bold text-slate-800">{strings.bookings.calendarStatus}</h3>
                 {isPropertyAdmin && existingBookings.length > 0 && (
                   <button
                     onClick={handleExport}
@@ -340,8 +354,8 @@ const Bookings = () => {
                     {strings.bookings.btnExport}
                   </button>
                 )}
+                {loadingList && <Loader2 className="animate-spin text-slate-400" size={16} />}
               </div>
-              {loadingList && <Loader2 className="animate-spin text-slate-400" size={16} />}
             </div>
 
             {existingBookings.length === 0 ? (
