@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
@@ -87,6 +87,34 @@ const Bookings = () => {
       .filter(b => b.status !== 'rejected')
       .map(b => ({ from: b.startDate, to: b.endDate }))
   ];
+
+  // Modificadores para resaltar reservas en el calendario
+  const modifiers = {
+    confirmed: existingBookings
+      .filter(b => b.status === 'confirmed')
+      .map(b => ({ from: b.startDate, to: b.endDate })),
+    pending: existingBookings
+      .filter(b => b.status === 'pending')
+      .map(b => ({ from: b.startDate, to: b.endDate }))
+  };
+
+  const modifiersStyles = {
+    confirmed: { backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: '700' },
+    pending: { backgroundColor: '#fef3c7', color: '#92400e', fontWeight: '700' }
+  };
+
+  const handleDayClick = (day: Date) => {
+    const booking = existingBookings.find(b =>
+      b.status !== 'rejected' &&
+      isWithinInterval(day, {
+        start: startOfDay(b.startDate),
+        end: endOfDay(b.endDate)
+      })
+    );
+    if (booking) {
+      setSelectedBooking(booking);
+    }
+  };
 
   if (loadingSettings) {
     return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
@@ -225,9 +253,12 @@ const Bookings = () => {
               mode="range"
               selected={range}
               onSelect={setRange}
+              onDayClick={handleDayClick}
               locale={es}
               min={1}
               disabled={disabledDays}
+              modifiers={modifiers}
+              modifiersStyles={modifiersStyles}
               showOutsideDays
               className="p-4"
             />

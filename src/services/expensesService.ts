@@ -235,11 +235,6 @@ export const calculateMemberPayments = (
     tagCounts[tagId] = tagMembers[tagId].size;
   });
 
-  console.log("tagCounts (unique members)", tagCounts);
-  console.log("tagMembers", Object.fromEntries(
-    Object.entries(tagMembers).map(([k, v]) => [k, Array.from(v)])
-  ));
-
   const processedEmails = new Set<string>();
 
   activeShares.forEach(share => {
