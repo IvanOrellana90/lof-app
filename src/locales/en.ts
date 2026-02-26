@@ -31,13 +31,27 @@ export const strings = {
     roleAdmin: "Admin",
     roleMember: "Member",
     toastCreated: "Property created!",
-    toastError: "Error creating property"
+    toastError: "Error creating property",
+    myBookings: {
+      title: "My Reservations",
+      noBookings: "You have no reservations recorded.",
+      editBooking: "Edit Reservation",
+    },
+    myExpenses: {
+      title: "My Expenses for the Month",
+      noExpenses: "You have no expenses recorded for this month.",
+      viewDetails: "View Details",
+      currentMonth: "Monthly Total",
+      sharedLabel: "Shared Expenses",
+      bookingLabel: "Bookings",
+    },
   },
   nav: {
     dashboard: "Dashboard",
     home: "Home",
     bookings: "Bookings",
     expenses: "Expenses & Payments",
+    community: "Community",
     profile: "My Profile",
     logout: "Log Out",
     settings: "Settings"
@@ -255,5 +269,25 @@ export const strings = {
   footer: {
     rights: "All rights reserved",
     madeWithLove: "Made with love by the Lof team"
+  },
+  community: {
+    title: "Lof Community",
+    subtitle: "Space to share topics, doubts, and comments about our home.",
+    newTopic: "New Topic",
+    topicTitlePlaceholder: "Topic title (e.g., Quincho rules)",
+    topicContentPlaceholder: "What do you want to share with the community?",
+    btnPost: "Post",
+    noTopics: "There are no conversation topics yet. Be the first!",
+    comments: "Comments",
+    writeComment: "Write a comment...",
+    btnComment: "Comment",
+    backToTopics: "Back to topics",
+    postedBy: "Posted by",
+    justNow: "Just now",
+    searchPlaceholder: "Search topics...",
+    pinned: "Pinned",
+    pin: "Pin",
+    unpin: "Unpin",
+    pinnedTopics: "Pinned Topics",
   }
 };

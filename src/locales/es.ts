@@ -31,13 +31,27 @@ export const strings = {
     roleAdmin: "Admin",
     roleMember: "Miembro",
     toastCreated: "¡Propiedad creada!",
-    toastError: "Error al crear propiedad"
+    toastError: "Error al crear propiedad",
+    myBookings: {
+      title: "Mis Reservas",
+      noBookings: "No tienes reservas registradas.",
+      editBooking: "Editar Reserva",
+    },
+    myExpenses: {
+      title: "Mis Gastos del Mes",
+      noExpenses: "No tienes gastos registrados para este mes.",
+      viewDetails: "Ver Detalles",
+      currentMonth: "Total Mes",
+      sharedLabel: "Gastos Comunes",
+      bookingLabel: "Reservas",
+    },
   },
   nav: {
     dashboard: "Panel",
     home: "Inicio",
     bookings: "Reservas",
     expenses: "Gastos y Pagos",
+    community: "Comunidad",
     profile: "Mi Perfil",
     logout: "Cerrar Sesión",
     settings: "Configuración"
@@ -255,5 +269,25 @@ export const strings = {
   footer: {
     rights: "Todos los derechos reservados",
     madeWithLove: "Hecho con amor por el equipo del Lof"
+  },
+  community: {
+    title: "Comunidad del Lof",
+    subtitle: "Espacio para compartir temas, dudas y comentarios sobre nuestra casa.",
+    newTopic: "Nuevo Tema",
+    topicTitlePlaceholder: "Título del tema (ej: Reglas del quincho)",
+    topicContentPlaceholder: "¿Qué quieres compartir con la comunidad?",
+    btnPost: "Publicar",
+    noTopics: "Aún no hay temas de conversación. ¡Sé el primero!",
+    comments: "Comentarios",
+    writeComment: "Escribe un comentario...",
+    btnComment: "Comentar",
+    backToTopics: "Volver a temas",
+    postedBy: "Publicado por",
+    justNow: "Recién",
+    searchPlaceholder: "Buscar temas...",
+    pinned: "Destacado",
+    pin: "Destacar",
+    unpin: "Quitar destacado",
+    pinnedTopics: "Temas Destacados",
   }
 };

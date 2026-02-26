@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { CalendarPlus, Home, User, Calendar } from 'lucide-react';
 import { getBookings, type Booking } from '../../services/bookingService';
 import { useLanguage } from '../../context/LanguageContext';
+import BookingDetailModal from '../../components/BookingDetailModal';
 
 const HouseStatus = () => {
   const { propertyId } = useParams();
@@ -10,6 +11,7 @@ const HouseStatus = () => {
   const [loading, setLoading] = useState(true);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -96,17 +98,22 @@ const HouseStatus = () => {
           <Home size={20} className="text-slate-600" />
           {strings.home.houseStatusTitle}
         </h3>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${isOccupied
-          ? 'bg-red-100 text-red-700'
-          : 'bg-green-100 text-green-700'
-          }`}>
+        <span
+          className={`text-xs px-3 py-1 rounded-full font-medium ${isOccupied
+            ? 'bg-red-100 text-red-700'
+            : 'bg-green-100 text-green-700'
+            }`}
+        >
           {isOccupied ? 'Ocupada' : strings.home.statusAvailable}
         </span>
       </div>
 
       {/* Estado actual */}
       {isOccupied && currentBooking ? (
-        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
+        <div
+          className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl cursor-pointer hover:bg-red-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          onClick={() => setSelectedBooking(currentBooking)}
+        >
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
               <User size={20} className="text-red-600" />
@@ -135,11 +142,12 @@ const HouseStatus = () => {
             {upcomingBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-lof-200 transition-colors"
+                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-lof-200 hover:bg-white transition-all cursor-pointer group"
+                onClick={() => setSelectedBooking(booking)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-lof-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Calendar size={14} className="text-lof-600" />
+                  <div className="w-8 h-8 bg-lof-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-lof-600 transition-colors">
+                    <Calendar size={14} className="text-lof-600 group-hover:text-white" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-800">
@@ -167,6 +175,14 @@ const HouseStatus = () => {
         <CalendarPlus size={20} />
         {strings.home.btnNewBooking}
       </Link>
+
+      {/* Modal de detalle de reserva */}
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+        />
+      )}
     </div>
   );
 };

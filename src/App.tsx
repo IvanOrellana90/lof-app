@@ -18,6 +18,7 @@ import Footer from './components/layout/Footer';
 
 // Placeholders temporales para las otras páginas
 import Expenses from './pages/Expenses';
+import Community from './pages/Community';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -75,6 +76,7 @@ function App() {
                                 <Route path="/" element={<Home />} />
                                 <Route path="bookings" element={<Bookings />} />
                                 <Route path="expenses" element={<Expenses />} />
+                                <Route path="community" element={<Community />} />
                                 <Route path="settings" element={
                                   <PropertyGuard requireAdmin={true}>
                                     <Settings />
