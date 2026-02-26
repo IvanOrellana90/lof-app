@@ -116,6 +116,7 @@ export const strings = {
     deleteConfirmDesc: "Esta acción no se puede deshacer. La fecha quedará liberada inmediatamente.",
     toastDeleted: "Reserva eliminada",
     toastDeleteError: "Error al eliminar la reserva",
+    btnExport: "Exportar a Excel",
     details: {
       title: "Detalles de la Reserva",
       guests: "Huéspedes",

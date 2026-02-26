@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
+import * as XLSX from 'xlsx';
 import { format, differenceInDays, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { es } from 'date-fns/locale';
@@ -15,7 +16,8 @@ import {
   Check,
   Ban,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '../context/SettingsContext';
@@ -233,6 +235,26 @@ const Bookings = () => {
     }
   };
 
+  // --- ACCIÓN 3: EXPORTAR A EXCEL ---
+  const handleExport = () => {
+    if (!existingBookings.length) return;
+
+    const data = existingBookings.map(b => ({
+      [strings.bookings.details.requestedBy]: b.userName,
+      [strings.bookings.checkIn]: format(b.startDate, 'dd/MM/yyyy'),
+      [strings.bookings.checkOut]: format(b.endDate, 'dd/MM/yyyy'),
+      [strings.bookings.details.status]: b.status,
+      [strings.bookings.details.total]: b.totalCost,
+      [strings.bookings.details.adults]: b.adults,
+      [strings.bookings.details.children]: b.children
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reservas");
+    XLSX.writeFile(workbook, `Reservas_${propertyId}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+  };
+
   return (
     <div className="px-4 py-8">
       {/* Header */}
@@ -267,7 +289,19 @@ const Bookings = () => {
           {/* 2. Lista de Reservas / Solicitudes */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-800">{strings.bookings.calendarStatus}</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="font-bold text-slate-800">{strings.bookings.calendarStatus}</h3>
+                {isPropertyAdmin && existingBookings.length > 0 && (
+                  <button
+                    onClick={handleExport}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors border border-green-200"
+                    title={strings.bookings.btnExport}
+                  >
+                    <Download size={14} />
+                    {strings.bookings.btnExport}
+                  </button>
+                )}
+              </div>
               {loadingList && <Loader2 className="animate-spin text-slate-400" size={16} />}
             </div>
 

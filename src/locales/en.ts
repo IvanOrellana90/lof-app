@@ -116,6 +116,7 @@ export const strings = {
     deleteConfirmDesc: "This action cannot be undone. The date will be released immediately.",
     toastDeleted: "Booking deleted",
     toastDeleteError: "Error deleting booking",
+    btnExport: "Export to Excel",
     details: {
       title: "Booking Details",
       guests: "Guests",
