@@ -53,3 +53,30 @@ export interface Notification {
   isRead: boolean;
   createdAt: any; // Firestore Timestamp
 }
+
+// --- PAYMENTS ---
+
+export type PaymentType =
+  | 'outgoing_external'
+  | 'outgoing_recurring'
+  | 'outgoing_unique'
+  | 'incoming';
+
+export type PaymentStatus = 'pending' | 'paid' | 'overdue';
+
+export interface PaymentRecord {
+  id: string;
+  propertyId: string;
+  title: string;
+  description?: string;
+  amount: number;
+  type: PaymentType;
+  category?: string;
+  dueDate?: string; // ISO date string YYYY-MM-DD
+  paidDate?: string; // ISO date string, set when marked as paid
+  status: PaymentStatus;
+  notes?: string;
+  syncId?: string; // Used for auto-generated payments to prevent duplicates
+  createdAt: any; // Firestore Timestamp
+  updatedAt: any;
+}
