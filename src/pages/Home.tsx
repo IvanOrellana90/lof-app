@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowRight, Calendar, Wallet, Settings } from 'lucide-react';
+import { ArrowRight, Calendar, Wallet, Settings, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getPropertyById, checkPropertyAdmin } from '../services/propertyService';
@@ -71,13 +71,23 @@ const Home = () => {
 
         {/* Card: Configuración (Solo Admin) */}
         {isPropertyAdmin && (
-          <Link to="settings" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-400 transition-all group">
-            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-4 text-slate-600 group-hover:scale-110 transition-transform">
-              <Settings size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800">Configuración</h3>
-            <p className="text-slate-500 text-sm mt-1">Editar precios y reglas de la casa.</p>
-          </Link>
+          <>
+            <Link to="payments" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-lof-300 transition-all group">
+              <div className="w-12 h-12 bg-lof-100 rounded-xl flex items-center justify-center mb-4 text-lof-600 group-hover:scale-110 transition-transform">
+                <CreditCard size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800">{strings.home.btnPayments}</h3>
+              <p className="text-slate-500 text-sm mt-1">{strings.home.paymentsSubtitle}</p>
+            </Link>
+
+            <Link to="settings" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-400 transition-all group">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-4 text-slate-600 group-hover:scale-110 transition-transform">
+                <Settings size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800">Configuración</h3>
+              <p className="text-slate-500 text-sm mt-1">Editar precios y reglas de la casa.</p>
+            </Link>
+          </>
         )}
       </div>
 

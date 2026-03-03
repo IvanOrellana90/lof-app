@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { usePropertyAdmin } from '../hooks/usePropertyAdmin';
 
@@ -9,7 +9,7 @@ import { getBookings, type Booking } from '../services/bookingService';
 import { getAllUsers, type UserData } from '../services/userService';
 import Avatar from '../components/ui/Avatar';
 import { getPropertyById } from '../services/propertyService';
-import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight, Info, Download } from 'lucide-react';
+import { Plus, Tag, DollarSign, Trash2, Users, Receipt, Home, Calendar, ChevronLeft, ChevronRight, Info, Download, CreditCard } from 'lucide-react';
 import BookingDetailModal from '../components/BookingDetailModal';
 import { toast } from 'sonner';
 
@@ -404,18 +404,24 @@ const Expenses = () => {
         </div>
 
         {isPropertyAdmin && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <Link
+              to={`/property/${propertyId}/payments`}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-semibold text-sm transition-all shadow-sm"
+            >
+              <CreditCard size={16} className="text-lof-600" /> {strings.nav.payments}
+            </Link>
             <button
               onClick={() => setShowTagModal(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 font-bold transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-semibold text-sm transition-all shadow-sm"
             >
-              <Tag size={20} /> <span className="hidden sm:inline">Gestionar Tags</span>
+              <Tag size={16} className="text-blue-500" /> Gestionar Tags
             </button>
             <button
               onClick={() => setShowExpenseModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-lof-600 text-white rounded-2xl hover:bg-lof-700 font-bold transition-all shadow-lg shadow-lof-500/30"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-lof-600 to-lof-600 text-white rounded-xl hover:from-lof-600 hover:to-lof-800 font-bold text-sm transition-all shadow-lg shadow-lof-500/30"
             >
-              <Plus size={20} /> <span className="hidden sm:inline">Nuevo Gasto</span>
+              <Plus size={16} /> Nuevo Gasto
             </button>
           </div>
         )}
@@ -478,6 +484,7 @@ const Expenses = () => {
           </div>
         </div>
       </div>
+
 
       {/* MODALES */}
       {showTagModal && (
