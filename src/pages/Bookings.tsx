@@ -360,64 +360,69 @@ const Bookings = () => {
 
             {existingBookings.length === 0 ? (
               <p className="text-slate-500 text-sm">{strings.bookings.noBookings}</p>
-            ) : (
-              <div className="space-y-3">
-                {existingBookings.map((booking) => {
-                  const isPending = booking.status === 'pending';
-                  const isRejected = booking.status === 'rejected'; // Nuevo estado
+            ) : (() => {
+              const now = startOfDay(new Date());
+              const upcoming = existingBookings
+                .filter(b => endOfDay(b.endDate) >= now)
+                .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+              const past = existingBookings
+                .filter(b => endOfDay(b.endDate) < now)
+                .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
 
-                  // Definimos estilos dinámicos según el estado
-                  let cardStyles = 'bg-slate-50 border-slate-100'; // Default (Confirmada)
-                  let badgeStyles = 'bg-green-100 text-green-700';
-                  let statusText = strings.bookings.statusConfirmed;
-                  let avatarStyles = 'bg-lof-100 text-lof-700';
+              const renderBookingCard = (booking: Booking) => {
+                const isPending = booking.status === 'pending';
+                const isRejected = booking.status === 'rejected';
 
-                  if (isPending) {
-                    cardStyles = 'bg-yellow-50 border-yellow-200';
-                    badgeStyles = 'bg-yellow-200 text-yellow-800';
-                    statusText = strings.bookings.statusPending;
-                    avatarStyles = 'bg-yellow-200 text-yellow-800';
-                  } else if (isRejected) {
-                    // Estilo para rechazadas (Grisáceo/Rojo suave y opaco)
-                    cardStyles = 'bg-red-50/50 border-red-100 opacity-75 grayscale-[0.5]';
-                    badgeStyles = 'bg-red-100 text-red-600 line-through';
-                    statusText = strings.bookings.statusRejected;
-                    avatarStyles = 'bg-slate-200 text-slate-500';
-                  }
+                let cardStyles = 'bg-slate-50 border-slate-100';
+                let badgeStyles = 'bg-green-100 text-green-700';
+                let statusText = strings.bookings.statusConfirmed;
+                let avatarStyles = 'bg-lof-100 text-lof-700';
 
-                  return (
-                    <div
-                      key={booking.id}
-                      onClick={() => setSelectedBooking(booking)}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-sm ${cardStyles}`}
-                    >
+                if (isPending) {
+                  cardStyles = 'bg-yellow-50 border-yellow-200';
+                  badgeStyles = 'bg-yellow-200 text-yellow-800';
+                  statusText = strings.bookings.statusPending;
+                  avatarStyles = 'bg-yellow-200 text-yellow-800';
+                } else if (isRejected) {
+                  cardStyles = 'bg-red-50/50 border-red-100 opacity-75 grayscale-[0.5]';
+                  badgeStyles = 'bg-red-100 text-red-600 line-through';
+                  statusText = strings.bookings.statusRejected;
+                  avatarStyles = 'bg-slate-200 text-slate-500';
+                }
 
-                      {/* Información de la Reserva */}
-                      <div className="flex items-center gap-3 mb-3 sm:mb-0">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${avatarStyles}`}>
-                          {booking.userName.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className={`font-medium text-sm ${isRejected ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
-                              {booking.userName}
-                            </p>
-                            {/* Etiqueta de Estado */}
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${badgeStyles}`}>
-                              {statusText}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-0.5 capitalize">
-                            {format(booking.startDate, 'dd MMM', { locale: es })} - {format(booking.endDate, 'dd MMM', { locale: es })}
-                          </p>
-                        </div>
+                return (
+                  <div
+                    key={booking.id}
+                    onClick={() => setSelectedBooking(booking)}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-sm ${cardStyles}`}
+                  >
+                    <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${avatarStyles}`}>
+                        {booking.userName.charAt(0)}
                       </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className={`font-medium text-sm ${isRejected ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                            {booking.userName}
+                          </p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${badgeStyles}`}>
+                            {statusText}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 capitalize">
+                          {format(booking.startDate, 'dd MMM', { locale: es })} - {format(booking.endDate, 'dd MMM', { locale: es })}
+                        </p>
+                      </div>
+                    </div>
 
-                      {/* Botones de Acción (Solo visibles si está Pendiente) */}
+                    <div className="flex items-center gap-2">
                       {isPending && isPropertyAdmin && (
                         <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-yellow-200 pt-2 sm:pt-0 sm:ml-2">
                           <button
-                            onClick={() => handleStatusChange(booking.id, 'confirmed')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(booking.id, 'confirmed');
+                            }}
                             className="p-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
                             title={strings.bookings.btnApprove}
                           >
@@ -436,7 +441,6 @@ const Bookings = () => {
                         </div>
                       )}
 
-                      {/* Botón de Eliminar (Siempre para Admin, pero separado) */}
                       {!isPending && isPropertyAdmin && (
                         <div className="flex items-center gap-2 pl-2 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:ml-2">
                           <button
@@ -452,17 +456,38 @@ const Bookings = () => {
                         </div>
                       )}
 
-                      {/* Si está rechazada, mostramos un ícono informativo opcional */}
                       {isRejected && (
                         <div className="hidden sm:block text-red-300 pr-2">
                           <Ban size={20} />
                         </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+                };
+
+                return (
+                  <div className="space-y-6">
+                    {upcoming.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] px-1">
+                          {strings.bookings.upcoming}
+                        </h4>
+                        {upcoming.map(renderBookingCard)}
+                      </div>
+                    )}
+
+                    {past.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] px-1 pt-2">
+                          {strings.bookings.past}
+                        </h4>
+                        {past.map(renderBookingCard)}
+                      </div>
+                    )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 

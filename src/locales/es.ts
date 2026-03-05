@@ -144,7 +144,9 @@ export const strings = {
       services: "Servicios Incluidos",
       status: "Estado de la reserva",
       requestedBy: "Solicitado por"
-    }
+    },
+    upcoming: "Próximas Reservas",
+    past: "Reservas Pasadas"
   },
   auth: {
     loginTitle: "Ingresar al Lof App",

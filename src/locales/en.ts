@@ -144,7 +144,9 @@ export const strings = {
       services: "Included Services",
       status: "Booking Status",
       requestedBy: "Requested by"
-    }
+    },
+    upcoming: "Upcoming Bookings",
+    past: "Past Bookings"
   },
   auth: {
     loginTitle: "Enter Lof App",
